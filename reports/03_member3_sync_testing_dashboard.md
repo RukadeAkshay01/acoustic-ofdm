@@ -183,7 +183,7 @@ Charts are generated from `dashboard/data.json`, which is exported directly from
 experiment scripts, so the page cannot drift from the measurements. It has crosshair
 tooltips, data tables under every BER chart, and works in both light and dark themes.
 
-**Live:** open `dashboard/index.html` in a browser
+**Live:** https://rukadeakshay01.github.io/acoustic-ofdm/
 
 ---
 

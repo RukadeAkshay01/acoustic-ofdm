@@ -1,7 +1,10 @@
 # Who's doing what
 
 Signal Processing mini project — adaptive self-calibrating OFDM acoustic
-communication. Full write-up in [`reports/00_midterm_report.md`](reports/00_midterm_report.md).
+communication.
+
+**Results dashboard:** https://rukadeakshay01.github.io/acoustic-ofdm/
+**Full write-up:** [`reports/00_midterm_report.md`](reports/00_midterm_report.md)
 
 | Member | Owns | Code | Report |
 |---|---|---|---|

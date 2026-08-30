@@ -7,7 +7,7 @@ automatic self-calibration, and echo-based distance estimation.
 Signal Processing mini project — Akshay Rukade, Krithika Jayganesh,
 Ritesh Gajanan Sonar.
 
-**Results dashboard:** open `dashboard/index.html` in a browser
+**Results dashboard:** https://rukadeakshay01.github.io/acoustic-ofdm/
 **Reports:** `reports/`
 
 ## Requirements

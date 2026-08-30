@@ -3,7 +3,7 @@
 **Course:** Signal Processing (custom mini project)
 **Team:** Akshay Rukade · Krithika Jayganesh · Ritesh Gajanan Sonar
 **Date:** 30 August 2026 · approx. week 4 of 7
-**Live results dashboard:** see `dashboard/index.html` (open it in a browser)
+**Live results dashboard:** https://rukadeakshay01.github.io/acoustic-ofdm/
 
 ---
 
