@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Individual Report — Akshay Rukade</title>
+<style>
+@page { size: A4; margin: 18mm 17mm; }
+* { box-sizing: border-box; }
+body {
+  font-family: "Liberation Serif", "Times New Roman", Georgia, serif;
+  font-size: 10.5pt; line-height: 1.45; color: #111; margin: 0;
+}
+h1 { font-size: 15pt; margin: 0 0 2pt; line-height: 1.2; }
+h2 { font-size: 11.5pt; margin: 15pt 0 5pt; padding-bottom: 2pt;
+     border-bottom: 0.6pt solid #999; }
+p { margin: 0 0 7pt; }
+.meta { font-size: 9.5pt; color: #333; margin: 0 0 3pt; }
+.rule { border-top: 1.2pt solid #111; margin: 9pt 0 0; }
+table { border-collapse: collapse; width: 100%; font-size: 9.5pt;
+        margin: 7pt 0 9pt; }
+th, td { border: 0.5pt solid #aaa; padding: 3.5pt 6pt; text-align: left;
+         vertical-align: top; }
+th { background: #f0f0f0; font-weight: bold; }
+td.n, th.n { text-align: right; white-space: nowrap;
+             font-family: "Liberation Mono", "Courier New", monospace;
+             font-size: 9pt; }
+code { font-family: "Liberation Mono", "Courier New", monospace; font-size: 9.5pt; }
+ul { margin: 0 0 8pt; padding-left: 16pt; }
+li { margin-bottom: 3.5pt; }
+.small { font-size: 9pt; color: #444; }
+.box { border: 0.5pt solid #999; background: #f7f7f7; padding: 7pt 9pt;
+       margin: 8pt 0; }
+.box p:last-child { margin-bottom: 0; }
+h2, h1 { page-break-after: avoid; }
+table, .box { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<h1>Individual Report — OFDM Modulation and Demodulation Engine</h1>
+<div class="rule"></div>
+<p class="meta" style="margin-top:6pt">
+<b>Name:</b> Akshay Rukade &nbsp;·&nbsp; <b>Role:</b> Member 1 — modem engine<br>
+<b>Project:</b> Adaptive Self-Calibrating OFDM-Based Acoustic Communication<br>
+<b>Code:</b> <code>ofdm/modem.py</code>, <code>ofdm/config.py</code> &nbsp;·&nbsp;
+<b>Repository:</b> github.com/RukadeAkshay01/acoustic-ofdm<br>
+<b>Stage:</b> mid-term, approximately week 4 of 7
+</p>
+
+<h2>1. Scope of my work</h2>
+<p>I am responsible for the modem core: converting a bit stream into a waveform a
+speaker can play, and converting recorded samples back into a symbol grid. This
+covers QPSK mapping and demapping, the IFFT and cyclic prefix, the pilot and
+preamble structure, the peak-to-average power problem, and the shared parameter
+set the rest of the team builds against.</p>
+<p>I do not own channel estimation, equalisation, synchronisation or the testing
+framework; those belong to Members 2 and 3, and their results are referenced here
+only where they were needed to verify my module.</p>
+
+<h2>2. What is implemented</h2>
+<p>The main design decision was to avoid a separate up-conversion stage. Instead of
+generating a complex baseband signal and mixing it to an audio carrier, I place the
+QPSK symbols directly on FFT bins 22–64 of a 256-point IFFT and enforce Hermitian
+symmetry, <code>X[N−k] = conj(X[k])</code>. A spectrum with this property has a
+purely real inverse transform, so the IFFT output is already a real audio signal in
+the 4–12 kHz band and can be written straight to a WAV file. I confirmed this
+numerically — the residual imaginary component after the transform is 7 × 10⁻¹⁷,
+which is floating-point noise. This removes the carrier-phase recovery problem from
+the project entirely.</p>
+
+<table>
+<tr><th>Parameter</th><th class="n">Value</th><th>Reason</th></tr>
+<tr><td>Sample rate</td><td class="n">48 kHz</td><td>supported by consumer audio hardware without resampling</td></tr>
+<tr><td>FFT size</td><td class="n">256</td><td>187.5 Hz spacing; 6.67 ms symbol</td></tr>
+<tr><td>Cyclic prefix</td><td class="n">64 samples</td><td>1.33 ms guard, covering 0.46 m of excess path</td></tr>
+<tr><td>Occupied band</td><td class="n">4–12 kHz</td><td>laptop speakers roll off below, microphones above</td></tr>
+<tr><td>Subcarriers</td><td class="n">31 data + 12 pilot</td><td>pilot every 4th subcarrier</td></tr>
+<tr><td>Modulation</td><td class="n">QPSK, Gray</td><td>one symbol error costs one bit, not two</td></tr>
+<tr><td>Raw payload rate</td><td class="n">9 300 bit/s</td><td>62 bits per symbol</td></tr>
+</table>
+
+<p>All of the above sit in a single configuration object with derived quantities as
+properties, so my teammates could change bandwidth or FFT size from one place. That
+turned out to matter later: restricting the modem to a calibrated subset of
+subcarriers became a one-line change rather than a modification to the modulator.</p>
+
+<h2>3. Peak-to-average power reduction</h2>
+<p>An OFDM symbol is the sum of many independent subcarriers, so its envelope is
+close to Gaussian and its peak-to-average power ratio is about 11 dB. A speaker is
+peak-limited, which means an unclipped waveform wastes most of the power the
+hardware could deliver, and received SNR follows average power. I implemented
+iterative clipping and filtering: clip to a set level above RMS, transform, zero
+everything outside the band, transform back, repeat.</p>
+
+<table>
+<tr><th>Clipping limit</th><th class="n">PAPR</th><th class="n">Avg power</th><th class="n">BER @ 8 dB</th><th class="n">BER @ 14 dB</th></tr>
+<tr><td>none</td><td class="n">11.3 dB</td><td class="n">+0.0 dB</td><td class="n">1.9 × 10⁻⁴</td><td class="n">0</td></tr>
+<tr><td>8 dB above RMS</td><td class="n">9.2 dB</td><td class="n">+2.1 dB</td><td class="n">1.3 × 10⁻⁴</td><td class="n">0</td></tr>
+<tr><td><b>6 dB above RMS</b></td><td class="n"><b>8.0 dB</b></td><td class="n"><b>+3.3 dB</b></td><td class="n"><b>3.2 × 10⁻⁴</b></td><td class="n"><b>0</b></td></tr>
+<tr><td>4 dB above RMS</td><td class="n">7.1 dB</td><td class="n">+4.2 dB</td><td class="n">2.6 × 10⁻³</td><td class="n">5.4 × 10⁻⁵</td></tr>
+</table>
+
+<p>I selected 6 dB. It is the last setting that still reaches zero errors from 14 dB
+SNR upward while recovering 3.3 dB of transmit power. Clipping harder introduces an
+error floor that no amount of SNR removes, because the distortion then exceeds the
+noise.</p>
+
+<h2>4. Verification of my module</h2>
+<p>My module is verified in simulation only. The most useful check is that with the
+channel reduced to additive noise, the measured BER should lie on the coherent-QPSK
+theory curve — if the IFFT, cyclic prefix or demapper were wrong, it would not.</p>
+
+<table>
+<tr><th class="n">SNR</th><th class="n">Measured BER</th><th class="n">QPSK theory</th></tr>
+<tr><td class="n">0 dB</td><td class="n">7.32 × 10⁻²</td><td class="n">7.86 × 10⁻²</td></tr>
+<tr><td class="n">4 dB</td><td class="n">1.20 × 10⁻²</td><td class="n">1.25 × 10⁻²</td></tr>
+<tr><td class="n">8 dB</td><td class="n">4.03 × 10⁻⁴</td><td class="n">1.91 × 10⁻⁴</td></tr>
+</table>
+<p class="small">16 trials × 6 200 bits per point. The small excess at higher SNR is the
+in-band distortion from the clipping described in §3, which is a deliberate trade.</p>
+
+<p>Other checks: Hermitian symmetry produces a real signal; an ideal loopback with no
+channel gives BER 0; and the configuration re-derives pilot, payload and bit-rate
+correctly when restricted to a subset of subcarriers.</p>
+
+<h2>5. A defect I introduced and corrected</h2>
+<p>My first version normalised the whole transmit frame — preamble and payload
+together — by a single global peak. This is wrong. The chirp preamble is a
+constant-envelope signal with roughly 3 dB PAPR while the OFDM block has about 9 dB,
+so dividing both by the same peak left the preamble far too quiet. The failure
+appeared in Member 3's synchroniser rather than in my module, which made it
+difficult to attribute: the correlator locked onto random payload correlation and
+the recovered BER was 0.49.</p>
+<p>Normalising the preamble and the payload separately fixed it; detection confidence
+rose from a marginal 8.6× the noise floor to 121×. The general lesson is that a
+single normalisation across signals with different crest factors is almost always
+wrong.</p>
+
+<h2>6. Honest assessment of progress</h2>
+<div class="box">
+<p>The modem core is functional and behaves correctly in simulation, but the project
+as a whole is at an early stage. I would put overall completion at roughly a third
+of what the proposal describes. The parts that are working are the parts that are
+easiest to verify on one machine; almost everything that makes this project
+<i>adaptive</i> and <i>self-calibrating</i> in the sense of the title is either
+untested on real hardware or not yet attempted.</p>
+</div>
+
+<p>Specifically, with respect to my own module:</p>
+<ul>
+<li><b>All of my BER figures are from simulation.</b> Over-the-air results exist but
+are preliminary, and were obtained with one laptop transmitting to its own
+microphone — so the two ends share a clock, and the cross-device behaviour the
+proposal is built around is not demonstrated.</li>
+<li><b>Fixed QPSK on every subcarrier is inadequate for real hardware.</b> Our
+measured speaker and microphone response varies by tens of dB across the band. The
+correct answer is bit-loading — more bits on strong subcarriers, fewer on weak ones
+— and I have not implemented it. The current workaround simply discards weak
+subcarriers, which wastes capacity.</li>
+<li><b>The cyclic prefix length is unjustified.</b> 1.33 ms happens to cover the
+impulse response we measured on one desk, but we have not characterised a
+reverberant room, and I have no measurement that would justify the value in general.</li>
+<li><b>No forward error correction in the modem.</b> A simple repetition code was
+added at the framing layer as a stopgap; it costs most of the throughput and is not a
+serious design.</li>
+<li><b>Out-of-band emission is not controlled.</b> The cyclic-prefix discontinuity and
+the clipping both splatter energy outside 4–12 kHz. Windowed OFDM would address this
+and I have not implemented it.</li>
+</ul>
+
+<h2>7. Plan for the remaining weeks</h2>
+<ul>
+<li>Implement bit-loading driven by the measured per-subcarrier SNR, which should
+remove the current error floor and recover throughput at the same time.</li>
+<li>Support the two-device test by making the transmitter configurable from a
+calibration set reported by the receiver.</li>
+<li>Measure the impulse response in a more reverberant environment and choose the
+cyclic prefix from that measurement rather than from convenience.</li>
+<li>Evaluate windowed OFDM for out-of-band suppression.</li>
+</ul>
+
+<p class="small" style="margin-top:12pt">All figures in this report are generated from
+measured output and are reproducible with <code>python3 experiments/run_ber.py</code>
+and <code>python3 experiments/run_papr.py</code>. Nothing here is illustrative.</p>
+
+</body>
+</html>

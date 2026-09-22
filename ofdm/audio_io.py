@@ -140,3 +140,40 @@ def find_capture_gain(probe, fs=48000, source=None, target_peak=0.5,
         subprocess.run(["pactl", "set-source-volume", source, f"{best[0]}%"],
                        capture_output=True)
     return best[0], best[1], log
+
+
+def record(seconds: float, fs: int = 48000, rec_dev: str = "default",
+           tmpdir: str = "/tmp"):
+    """Capture the microphone alone (the other end of a two-device link)."""
+    rx_path = f"{tmpdir}/aofdm_listen.wav"
+    rec = subprocess.run(
+        ["arecord", "-D", rec_dev, "-f", "S16_LE", "-r", str(fs), "-c", "1",
+         "-d", str(int(np.ceil(seconds))), rx_path],
+        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    if rec.returncode != 0:
+        raise RuntimeError(rec.stderr.decode()[:300])
+    return read_wav(rx_path)
+
+
+def play(x: np.ndarray, fs: int = 48000, play_dev: str = "default",
+         tmpdir: str = "/tmp"):
+    """Play through the speaker alone."""
+    tx_path = f"{tmpdir}/aofdm_play.wav"
+    write_wav(tx_path, x, fs)
+    p = subprocess.run(["aplay", "-D", play_dev, tx_path],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    if p.returncode != 0:
+        raise RuntimeError(p.stderr.decode()[:300])
+
+
+def wav_bytes(x: np.ndarray, fs: int = 48000) -> bytes:
+    """Encode a waveform as an in-memory 16-bit WAV file."""
+    import io
+    buf = io.BytesIO()
+    pcm = (np.clip(x, -1, 1) * 32767).astype("<i2")
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(fs)
+        w.writeframes(pcm.tobytes())
+    return buf.getvalue()

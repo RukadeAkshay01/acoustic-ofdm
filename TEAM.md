@@ -12,7 +12,7 @@ communication.
 | **Krithika Jayganesh** | Channel estimation, pilot design, equalisation, adaptive tracking, Stage-1 self-calibration | `ofdm/equalizer.py`, `ofdm/calibrate.py` | [02](reports/02_member2_channel_estimation.md) |
 | **Ritesh Gajanan Sonar** | Synchronisation, framing, audio I/O, BER analysis, web dashboard | `ofdm/sync.py`, `ofdm/receiver.py`, `ofdm/channel.py`, `ofdm/framing.py`, `ofdm/audio_io.py`, `experiments/`, `dashboard/` | [03](reports/03_member3_sync_testing_dashboard.md) |
 
-Shared: `ofdm/echo.py` (Stage 4), the experiment scripts, and integration debugging.
+Shared: the experiment scripts and integration debugging.
 
 ## Status
 
@@ -22,7 +22,6 @@ Shared: `ofdm/echo.py` (Stage 4), the experiment scripts, and integration debugg
 | 2 — Pilots, channel estimation, equalisation | Done |
 | 2 — Two separate devices | **Open — next task** |
 | 3 — Adaptive tracking | Done in simulation |
-| 3 — Echo ranging | Working |
 | Web dashboard | Done |
 
 ## Running it

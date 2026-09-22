@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acoustic OFDM Live Link</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f4f5f8; --panel:#fcfcfd; --panel-2:#eef0f4; --line:#d9dce4; --line-soft:#e7e9ef;
+  --ink:#10131a; --ink-2:#4e5462; --ink-3:#7b8192;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --good:#12805a; --warn:#a06a00; --bad:#c23331;
+  --good-bg:#e3f3ec; --warn-bg:#f8eed6; --bad-bg:#fae7e6;
+  --grid:#e4e7ee; --axis:#aab0bd;
+  --sans:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r:3px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#101218; --panel:#171a21; --panel-2:#1e222b; --line:#2b303b; --line-soft:#232832;
+    --ink:#eef0f5; --ink-2:#a5acbb; --ink-3:#767e8f;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --good:#3fbe8d; --warn:#d9a52e; --bad:#e66767;
+    --good-bg:#132a22; --warn-bg:#2b2415; --bad-bg:#2c1a1a;
+    --grid:#232832; --axis:#464e5d;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#101218; --panel:#171a21; --panel-2:#1e222b; --line:#2b303b; --line-soft:#232832;
+  --ink:#eef0f5; --ink-2:#a5acbb; --ink-3:#767e8f;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --good:#3fbe8d; --warn:#d9a52e; --bad:#e66767;
+  --good-bg:#132a22; --warn-bg:#2b2415; --bad-bg:#2c1a1a;
+  --grid:#232832; --axis:#464e5d;
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 64px;}
+.mast{padding:30px 0 20px;border-bottom:1px solid var(--line);margin-bottom:22px;
+  display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;justify-content:space-between;}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 8px;}
+h1{font-size:clamp(24px,4vw,34px);line-height:1.1;margin:0 0 8px;font-weight:600;letter-spacing:-.02em;}
+.sub{color:var(--ink-2);font-size:14px;max-width:62ch;margin:0;}
+.status{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);display:flex;flex-direction:column;gap:4px;align-items:flex-end;text-align:right;}
+.status b{color:var(--ink-2);font-weight:500;}
+a{color:var(--s1);}
+.chip{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;padding:2.5px 7px;
+  border-radius:2px;font-weight:500;display:inline-flex;align-items:center;gap:5px;}
+.chip.ok{background:var(--good-bg);color:var(--good);} .chip.part{background:var(--warn-bg);color:var(--warn);}
+.chip.no{background:var(--panel-2);color:var(--ink-3);} .chip.bad{background:var(--bad-bg);color:var(--bad);}
+.chip::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:15px 16px 13px;min-width:0;}
+.card h4{margin:0 0 3px;font-size:13px;font-weight:600;}
+.card .cap{font-size:11.5px;color:var(--ink-3);margin:0 0 12px;line-height:1.4;}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;}
+section{margin-bottom:34px;}
+.shead{display:flex;align-items:baseline;gap:14px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line);}
+.snum{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.1em;}
+h2{font-size:17px;margin:0;font-weight:600;}
+
+/* compose */
+.compose{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:14px;}
+@media (max-width:760px){.compose{grid-template-columns:1fr;}}
+label.f{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:10px 0 4px;}
+textarea,input[type=text],select{width:100%;font:inherit;font-size:13.5px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;}
+textarea{font-family:var(--mono);font-size:12.5px;min-height:120px;resize:vertical;}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--s1);outline-offset:1px;}
+.row{display:flex;gap:10px;flex-wrap:wrap;} .row>*{flex:1;min-width:110px;}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+button{font:inherit;font-size:13px;font-weight:500;padding:9px 14px;border-radius:var(--r);cursor:pointer;
+  border:1px solid var(--line);background:var(--panel-2);color:var(--ink);}
+button.primary{background:var(--s1);border-color:var(--s1);color:#fff;}
+button:disabled{opacity:.5;cursor:not-allowed;}
+button:focus-visible{outline:2px solid var(--s1);outline-offset:2px;}
+.hint{font-size:12px;color:var(--ink-3);margin-top:8px;line-height:1.45;}
+.hint code{font-family:var(--mono);font-size:11.5px;background:var(--panel-2);padding:1px 5px;border-radius:2px;}
+.hint b{color:var(--ink-2);font-weight:500;}
+
+/* pipeline stepper */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
+.step{background:var(--panel);padding:10px 10px 9px;position:relative;transition:background .25s;}
+.step .n{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.1em;}
+.step .t{font-size:12px;font-weight:600;margin-top:2px;}
+.step .d{font-size:10.5px;color:var(--ink-3);line-height:1.3;margin-top:2px;}
+.step::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line);}
+.step.on::before{background:var(--good);} .step.fail::before{background:var(--bad);} .step.wait::before{background:var(--warn);}
+.step.on{background:var(--panel);} .step.fail{background:var(--bad-bg);}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
+.tile{background:var(--panel);padding:12px 14px;}
+.tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px;}
+.tile .v{font-family:var(--mono);font-size:21px;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1;}
+.tile .u{font-size:11px;color:var(--ink-3);margin-left:2px;font-weight:400;}
+.tile .n{font-size:11px;color:var(--ink-3);margin-top:4px;line-height:1.3;}
+.tile.good .v{color:var(--good);} .tile.bad .v{color:var(--bad);} .tile.warn .v{color:var(--warn);}
+
+/* decoded */
+.decoded{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;word-break:break-word;background:var(--bg);
+  border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;min-height:70px;color:var(--ink);}
+.decoded.empty{color:var(--ink-3);}
+.pk{display:flex;flex-wrap:wrap;gap:3px;margin-top:10px;}
+.pk span{width:18px;height:10px;border-radius:2px;background:var(--panel-2);}
+.pk span.ok{background:var(--good);} .pk span.bad{background:var(--bad);}
+.pkcap{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:6px;}
+mark.diff{background:var(--bad-bg);color:var(--bad);}
+
+.chart{width:100%;display:block;overflow:visible;}
+.legend{display:flex;flex-wrap:wrap;gap:5px 15px;margin:9px 0 0;font-family:var(--mono);font-size:11px;color:var(--ink-2);}
+.legend span{display:inline-flex;align-items:center;gap:6px;}
+.swatch{width:11px;height:3px;border-radius:2px;flex:none;} .swatch.dot{width:8px;height:8px;border-radius:50%;}
+#tip{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;z-index:50;background:var(--panel);
+  border:1px solid var(--line);border-radius:var(--r);padding:6px 9px;font-family:var(--mono);font-size:11px;
+  color:var(--ink);box-shadow:0 4px 16px rgba(0,0,0,.16);white-space:nowrap;font-variant-numeric:tabular-nums;}
+#tip b{font-weight:600;} #tip i{font-style:normal;color:var(--ink-3);}
+
+.log{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--r);padding:10px 12px;max-height:200px;overflow:auto;white-space:pre-wrap;}
+.log .t{color:var(--ink-3);} .log .err{color:var(--bad);} .log .ok{color:var(--good);}
+.banner{border:1px solid var(--line);border-left:3px solid var(--s2);background:var(--panel);border-radius:var(--r);
+  padding:12px 15px;font-size:13px;color:var(--ink-2);margin-bottom:16px;}
+.banner b{color:var(--ink);font-weight:600;}
+.banner.bad{border-left-color:var(--bad);}
+[hidden]{display:none!important;}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="mast">
+  <div>
+    <p class="eyebrow">Signal Processing Mini Project · Live demo</p>
+    <h1>Acoustic OFDM Live Link</h1>
+    <p class="sub">Type anything. It becomes bits, then OFDM sound in the 4–12 kHz band, leaves the
+    speaker, enters a microphone, and is synchronised, equalised and decoded — in front of you.
+    The receiver is told nothing in advance; it reads the message length from the sound.</p>
+  </div>
+  <div class="status" id="status">connecting to the modem server…</div>
+</header>
+
+<div class="banner bad" id="offline" hidden>
+  <b>Modem server not reachable.</b> Start it on the laptop with <code>python3 live_server.py</code>
+  and open this page from the address it prints.
+</div>
+
+<section id="compose">
+  <div class="shead"><span class="snum">01</span><h2>Compose and transmit</h2></div>
+  <div class="compose">
+    <div class="card">
+      <label class="f" for="msg">Message (any text, up to 2000 bytes)</label>
+      <textarea id="msg">Hello from the acoustic OFDM link! This text is travelling as sound.</textarea>
+      <div class="row">
+        <div><label class="f" for="name">File name</label><input type="text" id="name" value="hello.txt" maxlength="18"></div>
+        <div><label class="f" for="rep">Repetition FEC</label>
+          <select id="rep"><option value="1">none (fastest)</option><option value="3" selected>×3 (robust)</option><option value="5">×5 (very robust)</option></select></div>
+        <div><label class="f" for="mode">Equaliser</label>
+          <select id="mode"><option value="adaptive" selected>adaptive (Phase 3)</option><option value="static">static (Phase 2)</option><option value="none">none (Phase 1)</option></select></div>
+      </div>
+      <div class="btns">
+        <button class="primary" id="b-loop">▶ Send: this laptop's speaker → its own mic</button>
+        <button id="b-remote">▶ Send from THIS device → laptop mic</button>
+        <button id="b-listen">● Listen only</button>
+        <button id="b-wav">↓ Download the sound as WAV</button>
+      </div>
+      <p class="hint" id="hint-loop"><b>Loopback</b> is the Phase 1/2 demo: one laptop talks to itself.
+      <b>Send from this device</b> is the two-device test: open this same page on a phone or second laptop
+      on the same Wi-Fi (address at top right), type there, and press it — that device plays the sound
+      from its own speaker while the laptop running the server records and decodes.
+      <b>Listen only</b> records the laptop mic for a few seconds so you can play a downloaded WAV from anything.</p>
+    </div>
+    <div class="card">
+      <h4>Stage-1 self-calibration (loopback only)</h4>
+      <p class="cap">Sets the microphone gain, then sweeps a chirp through the speaker to find which
+      subcarriers this laptop can actually hear. Only affects the loopback mode — a second device
+      has its own response, so cross-device transmissions always use the full band and rely on FEC.</p>
+      <div class="row">
+        <div><label class="f" for="backoff">Keep subcarriers within</label>
+          <select id="backoff"><option value="6">6 dB of the best</option><option value="8" selected>8 dB of the best</option><option value="12">12 dB of the best</option><option value="15">15 dB of the best</option></select></div>
+      </div>
+      <div class="btns"><button id="b-cal">Calibrate now (~10 s, makes noise)</button><button id="b-uncal">Forget calibration</button></div>
+      <div id="calinfo" class="hint">Not calibrated — loopback will use the full 4–12 kHz band.</div>
+      <svg class="chart" id="c-cal" hidden></svg>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="shead"><span class="snum">02</span><h2>The pipeline, live</h2></div>
+  <div class="steps" id="steps"></div>
+  <div class="tiles" id="tiles"></div>
+  <div class="grid2">
+    <div class="card"><h4>Decoded output</h4><p class="cap">What came out of the microphone side after CRC checks.</p>
+      <div class="decoded empty" id="decoded">Nothing received yet.</div>
+      <div class="pk" id="pk"></div><div class="pkcap" id="pkcap"></div></div>
+    <div class="card"><h4>Transmitted waveform</h4><p class="cap">Silence, 30 ms chirp, guard, then the OFDM symbols. This is what the speaker plays.</p>
+      <svg class="chart" id="c-tx"></svg></div>
+    <div class="card"><h4>Received waveform</h4><p class="cap">Raw microphone capture. The frame start found by the synchroniser is marked.</p>
+      <svg class="chart" id="c-rx"></svg><div class="legend" id="l-rx"></div></div>
+    <div class="card"><h4>Synchronisation: chirp correlation</h4><p class="cap">Matched-filter output. One sharp peak means the receiver knows exactly where the frame begins.</p>
+      <svg class="chart" id="c-sync"></svg></div>
+    <div class="card"><h4>Received spectrum</h4><p class="cap">FFT of the captured frame. The 4–12 kHz block is the OFDM signal; everything else is room and mic noise.</p>
+      <svg class="chart" id="c-spec"></svg></div>
+    <div class="card"><h4>Channel estimate |H| per subcarrier</h4><p class="cap">Learned from the reference symbol and pilots: how much speaker + room + mic attenuated each frequency.</p>
+      <svg class="chart" id="c-H"></svg><div class="legend" id="l-H"></div></div>
+    <div class="card"><h4>Constellation before and after equalisation</h4><p class="cap">Each dot is one QPSK symbol. Four tight clouds after equalisation means clean bits.</p>
+      <div class="row"><svg class="chart" id="c-craw"></svg><svg class="chart" id="c-ceq"></svg></div><div class="legend" id="l-c"></div></div>
+    <div class="card"><h4>Tracked phase drift</h4><p class="cap">Common phase error per OFDM symbol. A steady slope is the signature of two devices with different sampling clocks.</p>
+      <svg class="chart" id="c-cpe"></svg></div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">03</span><h2>Log</h2></div>
+  <div class="log" id="log"></div>
+</section>
+
+</div>
+<div id="tip"></div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const C1=()=>css("--s1"), C2=()=>css("--s2"), C3=()=>css("--s3");
+const fmtE = v => v===0 ? "0" : v.toExponential(1).replace("e-","×10⁻").replace("e+","×10");
+let INFO = null, LAST = null;
+
+/* ---------------- log ---------------- */
+function log(msg, cls=""){
+  const t = new Date().toTimeString().slice(0,8);
+  const el = $("log");
+  el.innerHTML += `<span class="t">${t}</span>  <span class="${cls}">${msg}</span>\n`;
+  el.scrollTop = el.scrollHeight;
+}
+
+/* ---------------- tiny SVG chart helpers ---------------- */
+const tip = $("tip");
+function showTip(html, ev){ tip.innerHTML=html; tip.style.opacity=1;
+  const x=Math.min(ev.clientX+14, innerWidth-tip.offsetWidth-8); tip.style.left=x+"px"; tip.style.top=(ev.clientY+14)+"px"; }
+function hideTip(){ tip.style.opacity=0; }
+function nice(v){ return Math.abs(v)>=100 ? v.toFixed(0) : Math.abs(v)>=10 ? v.toFixed(1) : v.toFixed(2); }
+
+/* opt: {h, series:[{x,y,color,type:'line'|'scatter'|'area', r, op, name}], xlab, ylab, xfmt, yfmt, marks:[{x,label}], xmin,xmax,ymin,ymax, square} */
+function chart(id, opt){
+  const svg = $(id); const w = svg.clientWidth || 420, h = opt.h || 200;
+  const m = {l:44,r:12,t:10,b:30};
+  svg.setAttribute("viewBox",`0 0 ${w} ${h}`); svg.innerHTML="";
+  svg.setAttribute("role","img"); svg.setAttribute("aria-label", opt.aria || "");
+  let xs=[],ys=[]; opt.series.forEach(s=>{xs=xs.concat(s.x);ys=ys.concat(s.y);});
+  let xmin=opt.xmin??Math.min(...xs), xmax=opt.xmax??Math.max(...xs);
+  let ymin=opt.ymin??Math.min(...ys), ymax=opt.ymax??Math.max(...ys);
+  if(xmax===xmin){xmax=xmin+1;} if(ymax===ymin){ymax=ymin+1;}
+  if(opt.ymin===undefined && opt.ymax===undefined){const p=(ymax-ymin)*.06; ymin-=p; ymax+=p;}
+  const X=v=>m.l+(v-xmin)/(xmax-xmin)*(w-m.l-m.r), Y=v=>h-m.b-(v-ymin)/(ymax-ymin)*(h-m.t-m.b);
+  const ns="http://www.w3.org/2000/svg", el=(t,a)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+  // grid
+  const ny=4, nx=5;
+  for(let i=0;i<=ny;i++){const v=ymin+(ymax-ymin)*i/ny;
+    svg.appendChild(el("line",{x1:m.l,x2:w-m.r,y1:Y(v),y2:Y(v),stroke:css("--grid"),"stroke-width":1}));
+    const t=el("text",{x:m.l-6,y:Y(v)+3.5,"text-anchor":"end","font-size":10,fill:css("--ink-3"),"font-family":css("--mono")});
+    t.textContent=(opt.yfmt||nice)(v); svg.appendChild(t);}
+  for(let i=0;i<=nx;i++){const v=xmin+(xmax-xmin)*i/nx;
+    const t=el("text",{x:X(v),y:h-m.b+15,"text-anchor":"middle","font-size":10,fill:css("--ink-3"),"font-family":css("--mono")});
+    t.textContent=(opt.xfmt||nice)(v); svg.appendChild(t);}
+  svg.appendChild(el("line",{x1:m.l,x2:w-m.r,y1:h-m.b,y2:h-m.b,stroke:css("--axis"),"stroke-width":1}));
+  if(opt.xlab){const t=el("text",{x:(m.l+w-m.r)/2,y:h-2,"text-anchor":"middle","font-size":10,fill:css("--ink-3"),"font-family":css("--mono")});t.textContent=opt.xlab;svg.appendChild(t);}
+  if(opt.ylab){const t=el("text",{x:10,y:m.t+8,"font-size":10,fill:css("--ink-3"),"font-family":css("--mono")});t.textContent=opt.ylab;svg.appendChild(t);}
+  // series
+  opt.series.forEach(s=>{
+    if(s.type==="scatter"){
+      s.x.forEach((x,i)=>{ if(x<xmin||x>xmax||s.y[i]<ymin||s.y[i]>ymax) return;
+        svg.appendChild(el("circle",{cx:X(x),cy:Y(s.y[i]),r:s.r||2.2,fill:s.color,"fill-opacity":s.op??.55}));});
+    } else {
+      let d=""; s.x.forEach((x,i)=>{d+=(i?"L":"M")+X(x).toFixed(1)+","+Y(s.y[i]).toFixed(1);});
+      if(s.type==="area"){ const a=d+`L${X(s.x[s.x.length-1]).toFixed(1)},${Y(Math.max(ymin,0))}L${X(s.x[0]).toFixed(1)},${Y(Math.max(ymin,0))}Z`;
+        svg.appendChild(el("path",{d:a,fill:s.color,"fill-opacity":.12,stroke:"none"})); }
+      svg.appendChild(el("path",{d,fill:"none",stroke:s.color,"stroke-width":s.w||1.5,"stroke-linejoin":"round",
+        "stroke-dasharray":s.dash?"4 3":"none"}));
+    }
+  });
+  (opt.marks||[]).forEach(mk=>{
+    svg.appendChild(el("line",{x1:X(mk.x),x2:X(mk.x),y1:m.t,y2:h-m.b,stroke:mk.color||C2(),"stroke-width":1.2,"stroke-dasharray":"3 3"}));
+    if(mk.label){const t=el("text",{x:X(mk.x)+4,y:m.t+10,"font-size":10,fill:mk.color||C2(),"font-family":css("--mono")});t.textContent=mk.label;svg.appendChild(t);}
+  });
+  // hover: nearest x on the first line series
+  const ref = opt.series.find(s=>s.type!=="scatter");
+  if(ref){
+    const hl=el("line",{y1:m.t,y2:h-m.b,stroke:css("--ink-3"),"stroke-width":1,opacity:0}); svg.appendChild(hl);
+    svg.addEventListener("mousemove",ev=>{const r=svg.getBoundingClientRect(); const xv=xmin+((ev.clientX-r.left)/r.width*w-m.l)/(w-m.l-m.r)*(xmax-xmin);
+      let bi=0,bd=1e18; ref.x.forEach((x,i)=>{const d=Math.abs(x-xv); if(d<bd){bd=d;bi=i;}});
+      hl.setAttribute("x1",X(ref.x[bi])); hl.setAttribute("x2",X(ref.x[bi])); hl.setAttribute("opacity",1);
+      showTip(opt.tipfn?opt.tipfn(bi):`<b>${(opt.xfmt||nice)(ref.x[bi])}</b><br>${(opt.yfmt||nice)(ref.y[bi])}`, ev);});
+    svg.addEventListener("mouseleave",()=>{hl.setAttribute("opacity",0);hideTip();});
+  }
+}
+function legend(id, items){ $(id).innerHTML = items.map(i=>`<span><span class="swatch${i.dot?" dot":""}" style="background:${i.color}${i.dash?";height:0;border-top:2px dashed "+i.color+";background:none":""}"></span>${i.name}</span>`).join(""); }
+function lin(n, a, b){ return Array.from({length:n},(_,i)=>a+(b-a)*i/Math.max(n-1,1)); }
+
+/* ---------------- steps ---------------- */
+const STEPS = [
+  ["01","Bits","text → bytes → CRC packets"],["02","FEC","repetition, interleaved"],["03","QPSK","2 bits per subcarrier"],
+  ["04","IFFT + CP","OFDM symbols"],["05","Speaker","chirp + frame"],["06","Microphone","capture"],
+  ["07","Sync","chirp correlation"],["08","FFT","back to subcarriers"],["09","Estimate","pilots → H"],
+  ["10","Equalise","MMSE"],["11","Decode","soft FEC + CRC"]];
+function drawSteps(state){
+  $("steps").innerHTML = STEPS.map((s,i)=>`<div class="step ${state[i]||""}"><div class="n">${s[0]}</div><div class="t">${s[1]}</div><div class="d">${s[2]}</div></div>`).join("");
+}
+drawSteps([]);
+function animateSteps(upto, failAt){
+  const st=[]; let i=0;
+  const tick=()=>{ if(i<STEPS.length){ st[i] = (failAt!==undefined && i===failAt) ? "fail" : (i<=upto ? "on" : ""); drawSteps(st); i++; if(i<=upto || (failAt!==undefined && i<=failAt)) setTimeout(tick,90); else drawSteps(st);} };
+  tick();
+}
+
+/* ---------------- tiles / result rendering ---------------- */
+function tiles(list){ $("tiles").innerHTML = list.map(t=>`<div class="tile ${t.c||""}"><div class="k">${t.k}</div><div class="v">${t.v}<span class="u">${t.u||""}</span></div><div class="n">${t.n||""}</div></div>`).join(""); }
+
+function diffMark(sent, got){
+  if(!sent) return got.replace(/</g,"&lt;");
+  let out=""; const n=Math.max(sent.length, got.length);
+  for(let i=0;i<n;i++){ const c=(got[i]??"").replace(/</g,"&lt;"); out += (got[i]===sent[i]) ? c : `<mark class="diff">${c||"␀"}</mark>`; }
+  return out;
+}
+
+function render(res){
+  LAST = res;
+  const cfg = res.config, fs = cfg.fs;
+  const failIdx = {sync:6, header:10, payload:10}[res.stage];
+  if(res.ok) animateSteps(10); else animateSteps(failIdx-1, failIdx);
+
+  // tiles
+  const t=[];
+  if(res.ok){
+    const exact = res.sent_text!==undefined ? (res.text===res.sent_text) : (res.prr===1);
+    t.push({k:"Result", v: exact?"EXACT":(res.prr>0?"PARTIAL":"FAILED"), c: exact?"good":(res.prr>0?"warn":"bad"),
+            n:`${res.nbytes_rx}/${res.header.nbytes} bytes, "${res.header.name}"`});
+  } else {
+    t.push({k:"Result", v:"FAILED", c:"bad", n:res.reason});
+  }
+  if(res.raw_ber!==undefined) t.push({k:"Raw BER", v:fmtE(res.raw_ber), n:`${res.raw_errs} of ${res.raw_bits} bits wrong before FEC`, c: res.raw_ber<0.01?"good":res.raw_ber<0.05?"warn":"bad"});
+  if(res.prr!==undefined) t.push({k:"Packets OK", v:Math.round(res.prr*100), u:"%", n:`${res.packets.filter(Boolean).length}/${res.packets.length} passed CRC`});
+  if(res.evm_db!==undefined) t.push({k:"EVM", v:res.evm_db.toFixed(1), u:"dB", n:"lower is cleaner; −10 dB ≈ error-free QPSK"});
+  if(res.sync) t.push({k:"Sync confidence", v:res.sync.confidence.toFixed(0), u:"×", n:"peak over noise floor (needs > 6)"});
+  t.push({k:"Mic peak", v:res.rx_peak.toFixed(2), u:"", n: res.rx_peak>0.95?"CLIPPING — lower the volume":res.rx_peak<0.05?"very quiet — raise the volume":"good level", c:res.rx_peak>0.95||res.rx_peak<0.05?"warn":""});
+  if(res.ok) t.push({k:"Throughput", v:Math.round(res.header.nbytes*8/res.rx_seconds), u:"bit/s", n:`incl. FEC ×${res.repeat}; raw ${Math.round(cfg.bitrate)} bit/s`});
+  t.push({k:"Link", v:res.source, u:"", n:cfg.calibrated?`${cfg.n_data} calibrated subcarriers`:`${cfg.n_data} data + ${cfg.n_pilot} pilots, full band`});
+  tiles(t);
+
+  // decoded text
+  const d=$("decoded");
+  if(res.ok){ d.classList.remove("empty"); d.innerHTML = diffMark(res.sent_text, res.text) || "<i>(empty)</i>"; }
+  else { d.classList.add("empty"); d.textContent = "Decode failed at stage: "+res.stage+" — "+res.reason; }
+  $("pk").innerHTML = (res.packets||[]).map(g=>`<span class="${g?"ok":"bad"}" title="${g?"CRC ok":"CRC failed"}"></span>`).join("");
+  $("pkcap").textContent = res.packets ? `${res.packets.length} packets × 64 bytes — green passed CRC, red were lost` : "";
+
+  // waveforms
+  if(res.tx_wave){ const x=lin(res.tx_wave.length,0,res.tx_seconds);
+    chart("c-tx",{h:180,series:[{x,y:res.tx_wave,color:C1(),w:1}],xlab:"time (s)",ymin:-1,ymax:1,aria:"transmitted waveform"}); }
+  else $("c-tx").innerHTML="";
+  { const x=lin(res.rx_wave.length,0,res.rx_seconds); const marks=[];
+    if(res.sync) marks.push({x:res.sync.start/fs,label:"frame start"});
+    chart("c-rx",{h:180,series:[{x,y:res.rx_wave,color:C1(),w:1}],xlab:"time (s)",ymin:-1,ymax:1,marks,aria:"received waveform"});
+    legend("l-rx",[{name:"microphone",color:C1()},{name:"frame start (sync)",color:C2(),dash:1}]); }
+  if(res.sync){ const x=lin(res.sync.env.length,0,res.sync.n/fs);
+    chart("c-sync",{h:180,series:[{x,y:res.sync.env,color:C3(),w:1,type:"area"}],xlab:"time (s)",marks:[{x:res.sync.peak/fs,label:`peak ${res.sync.confidence.toFixed(0)}×`}],aria:"chirp correlation"}); }
+  else $("c-sync").innerHTML="";
+  if(res.spec_f) chart("c-spec",{h:180,series:[{x:res.spec_f,y:res.spec_db,color:C1(),w:1.2}],xlab:"frequency (Hz)",ylab:"dB",ymin:-80,ymax:2,xfmt:v=>(v/1000).toFixed(0)+"k",aria:"received spectrum"});
+  if(res.H_db){ const ser=[{x:res.H_f,y:res.H_db,color:C1(),w:1.8,name:"|H| from pilots"}];
+    const lg=[{name:"|H| estimated from pilots",color:C1()}];
+    if(INFO&&INFO.calib&&res.source==="loopback"){ const c=INFO.calib; const off=Math.max(...res.H_db);
+      ser.push({x:c.resp_f,y:c.resp_db.map(v=>v+off),color:C2(),w:1.2,dash:1,name:"chirp calibration"}); lg.push({name:"Stage-1 chirp measurement",color:C2(),dash:1}); }
+    chart("c-H",{h:180,series:ser,xlab:"frequency (Hz)",ylab:"dB",xfmt:v=>(v/1000).toFixed(1)+"k",aria:"channel estimate"}); legend("l-H",lg); }
+  else { $("c-H").innerHTML=""; $("l-H").innerHTML=""; }
+  if(res.const_raw){
+    const sq=(id,pts,col,lab)=>chart(id,{h:220,series:[{type:"scatter",x:pts.map(p=>p[0]),y:pts.map(p=>p[1]),color:col,r:2,op:.45}],xmin:-2,xmax:2,ymin:-2,ymax:2,xlab:lab,aria:lab});
+    sq("c-craw",res.const_raw,C2(),"before equalisation (I)"); sq("c-ceq",res.const_eq,C3(),"after equalisation (I)");
+    legend("l-c",[{name:"raw FFT output",color:C2(),dot:1},{name:"after MMSE equaliser",color:C3(),dot:1}]);
+  }
+  if(res.cpe_deg&&res.cpe_deg.length>1) chart("c-cpe",{h:160,series:[{x:res.cpe_deg.map((_,i)=>i),y:res.cpe_deg,color:C1(),w:1.5}],xlab:"OFDM symbol",ylab:"deg",aria:"common phase error"});
+  else $("c-cpe").innerHTML="";
+}
+
+/* ---------------- server API ---------------- */
+async function api(path, body){
+  const r = await fetch(path, body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{});
+  const j = await r.json().catch(()=>({error:"bad response"}));
+  if(!r.ok) throw new Error(j.error||r.statusText);
+  return j;
+}
+function params(){ return {text:$("msg").value, name:$("name").value||"message.txt", repeat:+$("rep").value, mode:$("mode").value, use_calib:true}; }
+function busy(on){ ["b-loop","b-remote","b-listen","b-cal","b-uncal","b-wav"].forEach(id=>$(id).disabled=on); }
+
+async function refresh(){
+  try{ INFO = await api("/api/info"); $("offline").hidden=true;
+    const addr = INFO.addresses.map(a=>`http://${a}:${INFO.port}/`);
+    $("status").innerHTML = `<span class="chip ok">server online</span>` +
+      (addr.length?`<span>other devices on this Wi-Fi: <b>${addr.join("  ")}</b></span>`:"") +
+      `<span>${INFO.default.n_data}+${INFO.default.n_pilot} subcarriers · ${Math.round(INFO.default.bitrate)} bit/s raw · ${INFO.default.fs/1000} kHz</span>`;
+    showCal(INFO.calib);
+  }catch(e){ $("offline").hidden=false; $("status").innerHTML=`<span class="chip bad">server offline</span>`; }
+}
+function showCal(c){
+  if(!c){ $("calinfo").textContent="Not calibrated — loopback will use the full 4–12 kHz band."; $("c-cal").hidden=true; return; }
+  $("calinfo").innerHTML = `Calibrated: mic gain <b>${c.capture_volume}%</b> (peak ${c.capture_peak}), response spread <b>${c.dynamic_range_db} dB</b>, keeping <b>${c.kept}/${c.total}</b> subcarriers within ${c.backoff_db} dB of the strongest.`;
+  $("c-cal").hidden=false;
+  chart("c-cal",{h:150,series:[{x:c.resp_f,y:c.resp_db,color:C2(),w:1.5},{type:"scatter",x:c.kept_f,y:c.kept_f.map(f=>{const i=c.resp_f.indexOf(f);return i>=0?c.resp_db[i]:0;}),color:C3(),r:3,op:.9}],
+    xlab:"frequency (Hz)",ylab:"dB",xfmt:v=>(v/1000).toFixed(0)+"k",aria:"calibration response"});
+}
+
+async function poll(id){
+  for(;;){
+    const j = await api("/api/result/"+id);
+    if(j.state==="done") return j.result;
+    if(j.state==="failed") throw new Error(j.error);
+    await new Promise(r=>setTimeout(r,400));
+  }
+}
+
+$("b-loop").onclick = async ()=>{
+  busy(true); drawSteps([]); log("loopback: building frame and playing through this laptop's speaker…");
+  try{ const res = await api("/api/loopback", params()); render(res);
+    log(res.ok?`decoded ${res.nbytes_rx} bytes, raw BER ${res.raw_ber!==undefined?fmtE(res.raw_ber):"?"}, packets ${Math.round(res.prr*100)}%`:`FAILED: ${res.reason}`, res.ok?"ok":"err");
+  }catch(e){ log("error: "+e.message,"err"); }
+  busy(false);
+};
+
+$("b-remote").onclick = async ()=>{
+  busy(true); drawSteps([]);
+  try{
+    const p = params();
+    const prep = await api("/api/prepare", p);
+    log(`prepared ${prep.nbytes} bytes → ${prep.n_bits} bits, ${prep.n_sym} OFDM symbols, ${prep.seconds} s of audio`);
+    // fetch the audio *before* arming so the laptop is not recording while we download
+    const audio = new Audio("/api/wav/"+prep.id); audio.preload="auto";
+    await new Promise((res,rej)=>{ audio.oncanplaythrough=res; audio.onerror=()=>rej(new Error("audio load failed")); audio.load(); });
+    const arm = await api("/api/arm", {id:prep.id, mode:p.mode});
+    log(`laptop microphone armed for ${arm.seconds} s — playing from THIS device's speaker now`);
+    drawSteps(["on","on","on","on","wait","wait"]);
+    await new Promise(r=>setTimeout(r,700));               // let arecord start
+    await audio.play();
+    const res = await poll(prep.id); res.sent_text = p.text; render(res);
+    log(res.ok?`decoded ${res.nbytes_rx} bytes, raw BER ${res.raw_ber!==undefined?fmtE(res.raw_ber):"?"}, packets ${Math.round(res.prr*100)}%`:`FAILED: ${res.reason}`, res.ok?"ok":"err");
+  }catch(e){ log("error: "+e.message,"err"); }
+  busy(false);
+};
+
+$("b-listen").onclick = async ()=>{
+  const s = +prompt("Listen for how many seconds?", "8"); if(!s) return;
+  busy(true); drawSteps(["","","","","","wait"]); log(`listening on the laptop microphone for ${s} s — play the sound from the other device now`);
+  try{ const j = await api("/api/listen", {seconds:s, mode:$("mode").value});
+    const res = await poll(j.id); render(res);
+    log(res.ok?`decoded ${res.nbytes_rx} bytes "${res.header.name}", packets ${Math.round(res.prr*100)}%`:`FAILED: ${res.reason}`, res.ok?"ok":"err");
+  }catch(e){ log("error: "+e.message,"err"); }
+  busy(false);
+};
+
+$("b-wav").onclick = async ()=>{
+  try{ const prep = await api("/api/prepare", params());
+    const a=document.createElement("a"); a.href="/api/wav/"+prep.id; a.download=($("name").value||"message")+".ofdm.wav"; a.click();
+    log(`WAV ready (${prep.seconds} s). Copy it to any device, press "Listen only" here, then play it there.`);
+  }catch(e){ log("error: "+e.message,"err"); }
+};
+
+$("b-cal").onclick = async ()=>{
+  busy(true); log("Stage-1 calibration: setting mic gain, then sweeping a chirp…");
+  try{ const j = await api("/api/calibrate", {backoff:+$("backoff").value}); INFO.calib=j.calib; showCal(j.calib);
+    log(`calibrated: ${j.calib.kept}/${j.calib.total} subcarriers usable, response spread ${j.calib.dynamic_range_db} dB`,"ok");
+  }catch(e){ log("calibration error: "+e.message,"err"); }
+  busy(false);
+};
+$("b-uncal").onclick = async ()=>{ await api("/api/reset_calibration",{}); INFO.calib=null; showCal(null); log("calibration cleared"); };
+
+window.addEventListener("resize", ()=>{ if(LAST) render(LAST); });
+refresh(); setInterval(refresh, 15000);
+})();
+</script>
+</body>
+</html>

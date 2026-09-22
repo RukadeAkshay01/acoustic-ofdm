@@ -11,7 +11,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from ofdm.config import OFDMConfig                       # noqa: E402
-from ofdm import modem, channel, receiver, echo          # noqa: E402
+from ofdm import modem, channel, receiver                # noqa: E402
 
 
 def dec(x, n=600):
@@ -71,19 +71,6 @@ def main():
     pipe["spec_db"] = dec(20 * np.log10(X[m] / X[m].max() + 1e-12), 500)
     out["pipeline"] = pipe
 
-    # ---- echo ranging -----------------------------------------------------
-    er = {"true": [], "est": [], "err_cm": []}
-    for dm in [0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0]:
-        for snr in (25, 15, 10):
-            y = echo.simulate_echo(dm, cfg, snr_db=snr,
-                                   rng=np.random.default_rng(int(dm * 10) + snr))
-            r = echo.estimate_distance(y, cfg)
-            if r["ok"]:
-                er["true"].append(dm)
-                er["est"].append(round(r["distance_m"], 4))
-                er["err_cm"].append(round(abs(r["distance_m"] - dm) * 100, 2))
-    out["echo"] = er
-
     # ---- real over-the-air capture ---------------------------------------
     if os.path.exists("results/acoustic_run.npz"):
         d = np.load("results/acoustic_run.npz", allow_pickle=True)
@@ -121,8 +108,6 @@ def main():
         print(f"  pipeline {m:9s}: BER {pipe[m]['ber']:.2e}  EVM {pipe[m]['evm']:.1f} dB")
     if "real" in out:
         print(f"  real OTA: BER {out['real']['ber']:.2e}  PRR {out['real']['prr']*100:.0f}%")
-    print(f"  echo: mean error {np.mean(er['err_cm']):.1f} cm over "
-          f"{len(er['true'])} measurements")
 
 
 if __name__ == "__main__":

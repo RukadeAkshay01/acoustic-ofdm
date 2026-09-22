@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Signal Processing Project — Mid-Term Progress Report — Akshay Rukade</title>
+<style>
+@page { size: A4; margin: 16mm 20mm 18mm; }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: "Liberation Serif", "Nimbus Roman", "Times New Roman", serif;
+  font-size: 10.5pt;
+  line-height: 1.42;
+  color: #000;
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* running header: a repeating <thead> is the only reliable way to get a
+   per-page header out of Chrome's print engine */
+table.page { width: 100%; border-collapse: collapse; }
+table.page > thead > tr > th,
+table.page > tbody > tr > td { padding: 0; border: 0; text-align: left; }
+th.runhead {
+  font-size: 9.5pt; font-weight: normal; text-align: right;
+  border-bottom: 0.6pt solid #000 !important;
+  padding: 0 0 2pt !important;
+}
+td.body { padding-top: 4mm !important; }
+
+/* ---- title block ---- */
+.inst   { text-align: center; font-size: 14pt; font-weight: bold; margin-top: 8mm; }
+.dept   { text-align: center; font-size: 11pt; margin-top: 2pt; }
+.ptitle { text-align: center; font-size: 15pt; font-weight: bold; margin-top: 10mm; }
+.psub   { text-align: center; font-size: 12.5pt; font-weight: bold; margin-top: 3pt; }
+
+table.fields { margin: 9mm auto 0; border-collapse: collapse; font-size: 10.5pt; }
+table.fields td { padding: 2.4pt 0; vertical-align: top; text-align: left; }
+table.fields td.k { font-weight: bold; padding-right: 9mm; white-space: nowrap; }
+
+hr.title { border: none; border-top: 0.9pt solid #000; margin: 9mm 0 6mm; }
+
+/* ---- sections ---- */
+h2 {
+  font-size: 12pt; font-weight: bold;
+  margin: 11pt 0 4pt;
+  text-align: left;
+  page-break-after: avoid;
+}
+h2 .num { display: inline-block; min-width: 6.5mm; }
+h3 { font-size: 10.5pt; font-weight: bold; margin: 9pt 0 3pt; text-align: left;
+     page-break-after: avoid; }
+p { margin: 0 0 5pt; }
+
+ol, ul { margin: 0 0 7pt; padding-left: 5.5mm; }
+li { margin-bottom: 2.8pt; }
+ol.mods { padding-left: 6.5mm; }
+ol.mods > li { margin-bottom: 4.2pt; }
+
+code, .mono {
+  font-family: "Liberation Mono", "Nimbus Mono PS", "Courier New", monospace;
+  font-size: 9pt;
+}
+pre.flow {
+  font-family: "Liberation Mono", "Nimbus Mono PS", "Courier New", monospace;
+  font-size: 8.6pt; line-height: 1.4;
+  border: 0.5pt solid #999; background: #f6f6f6;
+  padding: 5pt 7pt; margin: 5pt 0 8pt;
+  white-space: pre; overflow-x: auto; text-align: left;
+}
+
+/* ---- tables ---- */
+table.d { border-collapse: collapse; width: 100%; font-size: 9.3pt;
+          margin: 5pt 0 8pt; page-break-inside: avoid; }
+table.d th, table.d td { border: 0.5pt solid #666; padding: 2.8pt 5pt;
+                         text-align: left; vertical-align: top; }
+table.d th { background: #e9e9e9; font-weight: bold; }
+table.d td.n, table.d th.n {
+  text-align: right; white-space: nowrap;
+  font-family: "Liberation Mono", "Nimbus Mono PS", "Courier New", monospace;
+  font-size: 8.8pt;
+}
+table.tl td:first-child { white-space: nowrap; font-weight: bold; }
+
+/* ---- figures ---- */
+figure { margin: 7pt 0 9pt; text-align: center; page-break-inside: avoid; }
+figure img { width: 100%; border: 0.4pt solid #bbb; }
+figure img.shot { width: 88%; }
+figcaption { font-size: 9pt; text-align: justify; margin-top: 3pt; }
+figcaption b { white-space: nowrap; }
+
+.note {
+  border: 0.5pt solid #666; background: #f4f4f4;
+  padding: 6pt 8pt; margin: 7pt 0 8pt;
+  page-break-inside: avoid;
+}
+.note p:last-child { margin-bottom: 0; }
+.small { font-size: 9pt; }
+.footnote { font-size: 9pt; font-style: italic; text-align: center;
+            border-top: 0.6pt solid #000; padding-top: 5pt; margin-top: 9pt; }
+</style>
+</head>
+<body>
+
+<table class="page">
+<thead><tr><th class="runhead">Signal Processing Project – Mid-Term Report</th></tr></thead>
+<tbody><tr><td class="body">
+
+<div class="inst">Indian Institute of Technology Madras</div>
+<div class="dept">BS Electronic Systems</div>
+
+<div class="ptitle">Signal Processing Project</div>
+<div class="psub">Mid-Term Progress Report</div>
+
+<table class="fields">
+<tr><td class="k">Project Title:</td>
+    <td>Adaptive Self-Calibrating OFDM-Based Acoustic Communication System<br>
+        for Reliable Cross-Device File Transfer with Opportunistic<br>
+        Echo-Based Environment Awareness</td></tr>
+<tr><td class="k">Project Code:</td>
+    <td>Custom (self-proposed)</td></tr>
+<tr><td class="k">Student Name:</td>
+    <td>Akshay Ajit Rukade</td></tr>
+<tr><td class="k">Roll Number:</td>
+    <td>24F2100357</td></tr>
+<tr><td class="k">Team Members:</td>
+    <td>Akshay Ajit Rukade — 24F2100357<br>
+        Krithika Jayganesh — 24F2100165<br>
+        Ritesh Gajanan Sonar — 23F3000249</td></tr>
+<tr><td class="k">Submission Date:</td>
+    <td>31-08-2026</td></tr>
+</table>
+
+<hr class="title">
+
+<h2><span class="num">1</span>Project Overview</h2>
+
+<p>This project builds a digital communication link that sends data between two ordinary
+computers using nothing but a speaker and a microphone, over the 4–12 kHz audio band. The
+modulation is OFDM: bits are mapped to QPSK symbols, placed on the bins of a 256-point
+inverse FFT with Hermitian symmetry so the output is directly a real audio waveform, and
+recovered at the far end by FFT after chirp-based frame synchronisation. The "adaptive" and
+"self-calibrating" parts of the title are the receiver measuring the acoustic channel from
+embedded pilot subcarriers and tracking how it drifts during a transmission, and the system
+probing the hardware before it transmits and using only the subcarriers that survive.</p>
+
+<h2><span class="num">2</span>Work Completed So Far</h2>
+
+<ol class="mods">
+
+<li><b>OFDM modulator and demodulator</b> (<code>ofdm/modem.py</code>, <code>ofdm/config.py</code>):
+Implemented Gray-coded QPSK mapping, the 256-point IFFT with Hermitian symmetry
+<code>X[N−k] = conj(X[k])</code>, and a 64-sample cyclic prefix. The Hermitian constraint makes
+the IFFT output purely real, so the signal is written straight to a WAV file with no
+up-conversion stage — verified numerically, with a residual imaginary part of 7 × 10⁻¹⁷.
+43 occupied subcarriers give 31 data + 12 pilot, 62 bits per symbol, 9 300 bit/s raw.</li>
+
+<li><b>Frame synchronisation</b> (<code>ofdm/sync.py</code>): 30 ms linear chirp preamble
+(3–13 kHz, raised-cosine tapered) detected by matched filtering and a Hilbert envelope.
+Timing is sample-exact down to 0 dB SNR in simulation, with the correlation peak 54× the
+noise floor at that point.</li>
+
+<li><b>Channel estimation and equalisation</b> (<code>ofdm/equalizer.py</code>): Least-squares
+estimate from a fully-known reference symbol, smoothed across frequency, followed by an MMSE
+equaliser <code>W[k] = conj(H[k]) / (|H[k]|² + σ²)</code> rather than plain <code>1/H</code>,
+so that deep spectral nulls do not blow up the noise. Three selectable modes — none, static,
+adaptive — so the benefit of each stage is measured rather than assumed.</li>
+
+<li><b>Adaptive pilot tracking</b> (<code>ofdm/equalizer.py</code>): Per-symbol tracking of a
+smooth multiplicative correction <code>C(k) = g·exp(j(a + b·k))</code> fitted to the pilots by
+weighted least squares, where <code>b</code> is the phase slope produced by a sampling-clock
+offset. Tested against a simulated clock offset up to 800 ppm.</li>
+
+<li><b>PAPR reduction</b> (<code>ofdm/modem.py</code>): Iterative clipping and filtering,
+three passes. Clipping 6 dB above RMS reduces PAPR from 11.3 dB to 8.0 dB and recovers 3.3 dB
+of average transmit power at no measurable BER cost above 14 dB SNR.</li>
+
+<li><b>Self-calibration</b> (<code>ofdm/calibrate.py</code>): The chirp is used a second time
+as a channel sounder. The measured end-to-end magnitude response spans 43 dB across the band
+on our test hardware, so the transmitter keeps only subcarriers within a set backoff of the
+strongest one. This took the over-the-air uncoded BER from 3.1 × 10⁻¹ to 8.3 × 10⁻³.</li>
+
+<li><b>Simulated channel and BER framework</b> (<code>ofdm/channel.py</code>,
+<code>experiments/</code>): Sparse multipath, a band-pass transducer response, AWGN at a target
+SNR, and a resampling-based clock offset. Four experiments run at 16 trials × 6 200 bits per
+point, writing results to JSON.</li>
+
+<li><b>File transfer, framing and a repetition code</b> (<code>ofdm/framing.py</code>):
+CRC-protected header plus fixed-length CRC-tagged packets, giving a packet-recovery-rate
+metric. An interleaved repetition-3 code was added after over-the-air tests showed that one
+bit error destroys a whole packet.</li>
+
+<li><b>Real audio path and web dashboard</b> (<code>ofdm/audio_io.py</code>,
+<code>dashboard/</code>): Transmission and capture through ALSA with automatic capture-gain
+calibration, and a single-page dashboard that plots the whole pipeline from data exported by
+the experiment scripts.</li>
+
+<li><b>Echo ranging</b> (<code>ofdm/echo.py</code>): The same matched filter reused to time the
+reflected chirp, giving <code>d = c·Δt/2</code>. Mean error 0.1 cm over 27 measurements.</li>
+
+</ol>
+
+<h2><span class="num">3</span>Screenshots / Results So Far</h2>
+
+<figure>
+<img src="figures/fig1_chain.png" alt="Signal chain">
+<figcaption><b>Figure 1.</b> A real transmission, laptop speaker to laptop microphone.
+(a) the transmitted frame — the chirp preamble and the OFDM block are normalised
+<i>separately</i>, for the reason given in §7; (b) the microphone recording; (c) the
+matched-filter output, where the single sharp peak is the detected frame start; (d) the
+averaged transmit spectrum, confined to the 4–12 kHz band. The comb structure in (d) is the
+self-calibration having switched off the subcarriers that the hardware cannot carry.</figcaption>
+</figure>
+
+<figure>
+<img src="figures/fig2_ber.png" alt="BER results">
+<figcaption><b>Figure 2.</b> Simulated BER, 16 trials × 6 200 bits per point.
+(a) On a noise-only channel the measured curve sits on the coherent-QPSK theory curve, which
+validates the IFFT, cyclic prefix, synchroniser and demapper at once. (b) On a multipath
+channel the unequalised link never leaves BER 0.47 at any SNR, while the equalised link falls
+to a 3.6 × 10⁻³ floor set by the channel's deepest null. (c) With a sampling-clock offset
+between the two ends, static calibration fails outright at 100 ppm (BER 0.51) while pilot
+tracking holds 3.8 × 10⁻³.</figcaption>
+</figure>
+
+<figure>
+<img src="figures/fig3_const.png" alt="Constellations and hardware response">
+<figcaption><b>Figure 3.</b> (a) and (b): received QPSK constellation before and after
+equalisation, from the over-the-air run of Figure 1 — the four clusters only separate once the
+channel is estimated and divided out. (c) the measured speaker-to-microphone magnitude
+response; the 13 subcarriers kept by the self-calibration stage are shaded dark, the 30
+discarded ones light.</figcaption>
+</figure>
+
+<h3>Measured results</h3>
+
+<table class="d">
+<tr><th>Measurement</th><th class="n">Result</th><th>Conditions</th></tr>
+<tr><td>BER vs QPSK theory (AWGN)</td><td class="n">7.3 × 10⁻² @ 0 dB</td><td>theory 7.9 × 10⁻²; no errors in 99 200 bits above 10 dB</td></tr>
+<tr><td>Unequalised, multipath</td><td class="n">4.7 × 10⁻¹</td><td>flat at every SNR from 0 to 30 dB</td></tr>
+<tr><td>Equalised, multipath</td><td class="n">3.6 × 10⁻³</td><td>error floor set by spectral nulls, not noise</td></tr>
+<tr><td>Static equaliser, 100 ppm clock offset</td><td class="n">5.1 × 10⁻¹</td><td>simulated offset</td></tr>
+<tr><td>Adaptive tracking, 100 ppm clock offset</td><td class="n">3.8 × 10⁻³</td><td>simulated offset — 135× improvement</td></tr>
+<tr><td>PAPR after clipping and filtering</td><td class="n">8.0 dB</td><td>from 11.3 dB; +3.3 dB average transmit power</td></tr>
+<tr><td>Over-the-air uncoded BER</td><td class="n">1.2 × 10⁻²</td><td>real speaker → real microphone, EVM −7.1 dB</td></tr>
+<tr><td>Over-the-air packet recovery</td><td class="n">4 / 5 packets</td><td>229 of 293 bytes recovered with repetition-3</td></tr>
+<tr><td>Simulated file transfer</td><td class="n">293 / 293 bytes</td><td>20 dB SNR, 80 ppm offset — exact recovery</td></tr>
+<tr><td>Echo ranging accuracy</td><td class="n">0.1 cm mean error</td><td>27 measurements, 0.25–6 m</td></tr>
+</table>
+
+<figure>
+<img class="shot" src="figures/fig4_dashboard.png" alt="Web dashboard screenshot">
+<figcaption><b>Figure 4.</b> The web dashboard (top of page). It is generated from the same
+JSON the experiment scripts write, so the figures on it cannot drift away from the
+measurements. Live at <code>rukadeakshay01.github.io/acoustic-ofdm</code>.</figcaption>
+</figure>
+
+<h2><span class="num">4</span>Workflow / Approach</h2>
+
+<p>The transmitter and receiver are mirror images, with synchronisation and channel estimation
+as the two stages that have no counterpart on the transmit side:</p>
+
+<pre class="flow">TRANSMITTER
+  file --> CRC packets --> repetition FEC --> bits --> QPSK map
+       --> insert pilots + reference symbol --> Hermitian IFFT (N=256)
+       --> add cyclic prefix (64) --> clip &amp; filter (PAPR) --> prepend chirp
+       --> WAV --> speaker
+
+                        ((  acoustic channel  ))
+
+RECEIVER
+  microphone --> bandpass 4-12 kHz --> chirp matched filter --> frame start
+             --> strip cyclic prefix --> FFT --> LS channel estimate (reference symbol)
+             --> per-symbol pilot tracking --> MMSE equalise --> QPSK demap
+             --> FEC decode --> CRC check --> file</pre>
+
+<p>Before any of this runs, a calibration pass transmits the chirp alone, measures the
+end-to-end magnitude response, and restricts both ends to the usable subcarriers. Development
+followed the phase plan agreed at the proposal review: Phase 1 an end-to-end link with BER
+against theory, Phase 2 pilots and equalisation, Phase 3 adaptive tracking and echo ranging.
+Every stage is measured against the one before it rather than assumed to help.</p>
+
+<h2><span class="num">5</span>Tools &amp; Technologies Used</h2>
+
+<ul>
+<li><b>Language:</b> Python 3.11</li>
+<li><b>Libraries:</b> NumPy (FFT, arrays), SciPy (Butterworth filtering, Hilbert transform,
+resampling), Matplotlib (report figures)</li>
+<li><b>Audio I/O:</b> ALSA <code>aplay</code> / <code>arecord</code> called directly, with
+PipeWire <code>pactl</code> for automatic level calibration — no extra Python audio dependency</li>
+<li><b>Dashboard:</b> a single self-contained HTML page with hand-written SVG charts, published
+through GitHub Pages</li>
+<li><b>Version control:</b> Git, public repository at
+<code>github.com/RukadeAkshay01/acoustic-ofdm</code></li>
+<li><b>Platform / IDE:</b> Linux, VS Code</li>
+</ul>
+
+<h2><span class="num">6</span>Work Remaining</h2>
+
+<div class="note">
+<p><b>Honest position.</b> Measured against the full proposal we would put the project at
+roughly <b>30% complete</b>. Phases 1 and 2 work and are measured, and the Phase 3 adaptive
+tracking works in simulation. But the single result the whole proposal rests on — that the
+system holds a link between <i>two separate devices</i>, which do not share a clock — has not
+been demonstrated. Every over-the-air run so far is one laptop transmitting to its own
+microphone, so both ends run off the same crystal and the clock offset our tracker is designed
+to fix is simulated, not real.</p>
+</div>
+
+<ul>
+<li><b>The two-device test.</b> Transmit from one laptop and receive on another. This is the
+largest remaining item and everything else is lower priority than it.</li>
+<li><b>Bit-loading.</b> The modem uses QPSK on every subcarrier. Since the measured hardware
+response varies by 43 dB, the correct answer is more bits on strong subcarriers and fewer on
+weak ones. The current code simply discards weak subcarriers, which works but wastes capacity.</li>
+<li><b>Justify the cyclic prefix length.</b> 1.33 ms covers the impulse response we measured on
+one desk. We have not measured a reverberant room, so the value is not yet defensible in
+general.</li>
+<li><b>A real error-correcting code.</b> The repetition-3 code is a stopgap that costs two
+thirds of the throughput. A convolutional or Reed–Solomon code is the proper answer.</li>
+<li><b>Multi-device / half-duplex operation</b> and a receiver-to-transmitter feedback handshake
+so the calibration set can be negotiated rather than shared out of band.</li>
+<li><b>Out-of-band emission.</b> The cyclic-prefix discontinuity and the clipping both splatter
+energy outside the band; windowed OFDM would address this.</li>
+<li><b>Final report, demo video and viva preparation.</b></li>
+</ul>
+
+<h2><span class="num">7</span>Challenges Faced</h2>
+
+<p><b>A single normalisation across two different signals (solved).</b> My first transmitter
+normalised the whole frame — chirp and OFDM together — by one global peak. The chirp has a
+3 dB peak-to-average ratio and the OFDM block about 9 dB, so this left the chirp roughly 6 dB
+too quiet. The failure showed up in the synchroniser, not in my module: the correlator locked
+onto random correlation inside the payload and BER came out at 0.49. Normalising the two parts
+separately took detection confidence from 8.6× the noise floor to 121×.</p>
+
+<p><b>Synchroniser and channel estimator are not independent (solved).</b> The receiver starts
+its FFT window a few samples early, inside the cyclic prefix. That makes the apparent channel
+rotate across subcarriers, and a pilot-based estimator can only follow it while the rotation
+stays under π radians between adjacent pilots — that is, while the backoff <code>D &lt; N/(2·pilot
+spacing) = 32</code> samples. We had chosen exactly 32, sitting on the aliasing limit, and the
+adaptive equaliser produced BER between 0.3 and 0.45 for reasons neither module could show on
+its own. Reducing the backoff to 8 samples fixed it.</p>
+
+<p><b>The adaptive tracker initially made things worse (solved).</b> Blending the pilot estimate
+into the running estimate each symbol, <code>H ← (1−μ)H + μH_pilot</code>, raised BER from
+3 × 10⁻⁴ to about 10⁻¹, and the loss did not shrink with SNR — so it was systematic, not noise.
+The recursion was replacing a 43-subcarrier estimate with 12 pilots interpolated across
+spectral nulls. Tracking a smooth two-parameter <i>correction</i> instead of re-estimating the
+channel fixed it.</p>
+
+<p><b>Most of the real-hardware debugging was not DSP (solved, but costly).</b> Getting the
+first genuine acoustic link took four fixes, all of which looked like DSP failures: ALSA emits a
+clipped full-scale click when capture starts and again when it stops, and the matched filter
+locked onto both in turn; the noise-floor estimate became signal-dominated once the search
+window was narrowed; and on one occasion the speaker was simply muted, which cost about an hour
+before anyone checked <code>pactl get-sink-mute</code>. We now calibrate the capture gain
+automatically before every transmission, because the usable volume window turned out to be
+narrow and very steep.</p>
+
+<p><b>Still open: link margin over the air.</b> Uncoded over-the-air BER is 1.2 × 10⁻², which is
+two orders of magnitude worse than the same configuration in simulation. Self-calibration
+removed most of the gap but not all of it, and we have not yet separated how much of what
+remains is nonlinearity in a small laptop speaker from how much is room reverberation.</p>
+
+<h2><span class="num">8</span>Individual Contribution</h2>
+
+<ul>
+<li><b>Akshay Ajit Rukade (24F2100357) — me:</b> The modem core — <code>ofdm/modem.py</code> and
+<code>ofdm/config.py</code>. QPSK mapping and demapping; the Hermitian-symmetric IFFT and
+cyclic prefix, which is the decision that removed the up-conversion stage and with it all
+carrier-recovery work; the pilot sequence (pseudo-random rather than all-ones, which would clip
+a small speaker) and the chirp preamble; the PAPR clipping-and-filtering loop and the
+measurements that set 6 dB as the operating point; and the shared configuration object the rest
+of the team's code reads its parameters from. I also found and fixed the frame-normalisation
+defect described in §7.</li>
+
+<li><b>Krithika Jayganesh (24F2100165):</b> Channel estimation and equalisation —
+<code>ofdm/equalizer.py</code>, <code>ofdm/calibrate.py</code>. The least-squares estimator,
+the choice of MMSE over zero-forcing, the adaptive pilot tracker including the diagnosis of why
+the obvious version failed, and the Stage-1 self-calibration that selects usable subcarriers.</li>
+
+<li><b>Ritesh Gajanan Sonar (23F3000249):</b> Synchronisation, testing and presentation —
+<code>ofdm/sync.py</code>, <code>ofdm/receiver.py</code>, <code>ofdm/channel.py</code>,
+<code>ofdm/framing.py</code>, <code>ofdm/audio_io.py</code>, <code>experiments/</code>,
+<code>dashboard/</code>. The chirp matched filter, the simulated channel, all four BER
+experiments, the file framing and repetition code, the real ALSA audio path, and the web
+dashboard.</li>
+</ul>
+
+<p>The integration debugging — which is where most of the difficulty turned out to be — was
+shared, since three of the four problems in §7 could only be seen by looking at two modules at
+once.</p>
+
+<h2><span class="num">9</span>Timeline for Remaining Work</h2>
+
+<table class="d tl">
+<tr><th>Week / Date Range</th><th>Planned Task</th></tr>
+<tr><td>1 Sep – 7 Sep</td><td>Two-device transmission test on separate laptops; measure the real
+clock offset and confirm the adaptive tracker against it rather than against a simulated offset</td></tr>
+<tr><td>8 Sep – 14 Sep</td><td>Bit-loading from the measured per-subcarrier SNR; replace the
+repetition code with a proper FEC; re-run the full BER suite</td></tr>
+<tr><td>15 Sep – 21 Sep</td><td>Reverberant-room impulse response measurement and cyclic-prefix
+justification; multi-device / half-duplex experiment; range and robustness testing</td></tr>
+<tr><td>22 Sep – 28 Sep</td><td>Final report, dashboard update with the two-device results, demo
+video and viva preparation</td></tr>
+</table>
+
+<p class="footnote">This is a mid-term progress report. The final report with all 11 sections
+will be submitted after end-term exams.<br>
+All figures and numbers above are generated from measured output and are reproducible from the
+repository; none are illustrative.</p>
+
+</td></tr></tbody></table>
+
+</body>
+</html>

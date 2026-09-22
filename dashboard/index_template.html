@@ -286,31 +286,8 @@ footer{border-top:1px solid var(--line);padding-top:18px;font-family:var(--mono)
   <div class="note" id="ota-note"></div>
 </section>
 
-<section id="echo">
-  <div class="shead"><span class="snum">05</span><h2>Echo ranging</h2></div>
-  <p class="sdesc">Stage 4 of the original proposal, kept because it reuses the synchroniser's matched
-  filter almost unchanged: transmit the chirp, find the direct arrival, then find the reflection after it.
-  Distance is <code>c · Δt / 2</code>. Simulated reflections at 25, 15 and 10 dB SNR.</p>
-  <div class="grid2">
-    <div class="card"><h4>Estimated versus true distance</h4>
-      <p class="cap">27 measurements. The dashed line is perfect agreement.</p>
-      <div class="chartbox"><svg class="chart" id="c-echo"></svg></div>
-      <div class="legend" id="l-echo"></div></div>
-    <div class="card"><h4>What the ranging module inherits</h4>
-      <p class="cap">Why this was cheap to add.</p>
-      <ul class="tight">
-        <li><strong>Same chirp.</strong> The 3–13 kHz sweep already exists as the frame preamble.</li>
-        <li><strong>Same matched filter.</strong> <code>sync.matched_filter</code> is reused unchanged.</li>
-        <li><strong>One extra idea.</strong> The direct speaker-to-microphone leakage is 20–40 dB
-        stronger than any reflection, so the module deliberately blanks the first 25 cm of range
-        and searches for the strongest peak <em>after</em> the direct arrival, not the largest peak overall.</li>
-      </ul>
-      <div class="note" id="echo-note" style="margin-top:15px"></div></div>
-  </div>
-</section>
-
 <section id="status">
-  <div class="shead"><span class="snum">06</span><h2>Where this stands</h2></div>
+  <div class="shead"><span class="snum">05</span><h2>Where this stands</h2></div>
   <div class="grid2">
     <div class="card"><h4>Working and measured</h4>
       <ul class="tight" id="done"></ul></div>
@@ -502,7 +479,7 @@ function table(id, head, rows){
 
 /* ---------------- populate ---------------- */
 const C1=()=>css("--s1"), C2=()=>css("--s2"), C3=()=>css("--s3");
-const sim = D.sim, pipe = D.pipeline, real = D.real, echo = D.echo;
+const sim = D.sim, pipe = D.pipeline, real = D.real;
 const FLOOR = 1e-5;
 const clamp = a => a.map(v => v===0 ? FLOOR : Math.max(v,FLOOR));
 
@@ -518,9 +495,7 @@ const phases = [
   {c:"ok", s:"Complete", t:"Phase 2 — Estimation & equalisation",
    d:"Pilot symbols, least-squares channel estimation and MMSE equalisation. BER improvement over the unequalised link is decisive at every SNR."},
   {c:"part", s:"Partly done", t:"Phase 3 — Adaptive tracking",
-   d:"Per-symbol pilot tracking works and rescues the cross-device clock-offset case outright. Two-device testing is still outstanding."},
-  {c:"ok", s:"Working", t:"Stage 4 — Echo ranging",
-   d:"Kept rather than dropped: it reuses the synchroniser's matched filter, so it cost almost nothing to add."}
+   d:"Per-symbol pilot tracking works and rescues the cross-device clock-offset case outright. Two-device testing is still outstanding."}
 ];
 document.getElementById("phases").innerHTML = phases.map(p=>
   `<div class="phase ${p.c}"><span class="chip ${p.c}">${p.s}</span>
@@ -722,32 +697,12 @@ if(real){
      one point the speaker was simply muted.`;
 }
 
-/* echo */
-{
-  const mx = Math.max(...echo.true)*1.08;
-  chart("c-echo",{h:250,
-    series:[
-      {x:[0,mx],y:[0,mx],color:css("--ink-3"),w:1.4,dash:"4 3",name:"ideal"},
-      {type:"scatter",x:echo.est,y:echo.true,color:C1(),r:4,op:.7,
-       tipfn:i=>`<b>${echo.true[i].toFixed(2)} m true</b><br>estimated ${echo.est[i].toFixed(3)} m<br><i>error ${echo.err_cm[i]} cm</i>`}],
-    x0:0,x1:mx,y0:0,y1:mx,xlab:"estimated distance (m)",ylab:"true distance (m)",hover:false,
-    yfmt:v=>v.toFixed(1),xfmt:v=>v.toFixed(1),aria:"Echo ranging accuracy"});
-  legend("l-echo",[{name:"measurement",color:C1(),dot:1},{name:"perfect agreement",color:css("--ink-3"),dash:1}]);
-  const mean = echo.err_cm.reduce((a,b)=>a+b,0)/echo.err_cm.length;
-  const worst = Math.max(...echo.err_cm);
-  document.getElementById("echo-note").innerHTML =
-    `Mean absolute error <strong>${mean.toFixed(1)} cm</strong> across ${echo.err_cm.length}
-     measurements from 0.5 to 5 m, worst case ${worst.toFixed(1)} cm. Resolution is bounded by the
-     chirp bandwidth: <code>c / 2B</code> ≈ 1.7 cm for a 10 kHz sweep.`;
-}
-
 /* status lists */
 document.getElementById("done").innerHTML = [
   ["Phase 1 in full.","Measured AWGN BER sits on the coherent-QPSK theory curve from 0 to 8 dB, then hits zero errors in 99 000 bits."],
   ["Phase 2 in full.","Equalisation is the difference between a link that never works and one that works; the unequalised BER never leaves 0.47."],
   ["Adaptive tracking.","Rescues the cross-device clock-offset case, where static calibration fails outright."],
-  ["A real acoustic link.","Text transmitted through a laptop speaker and recovered from its microphone, uncoded BER 8.3 × 10⁻³ at best."],
-  ["Echo ranging.","Sub-centimetre in simulation, reusing the synchroniser unchanged."]
+  ["A real acoustic link.","Text transmitted through a laptop speaker and recovered from its microphone, uncoded BER 8.3 × 10⁻³ at best."]
 ].map(x=>`<li><strong>${x[0]}</strong> ${x[1]}</li>`).join("");
 
 document.getElementById("todo").innerHTML = [

@@ -28,10 +28,18 @@ def bits_to_bytes(bits: np.ndarray) -> bytes:
     return np.packbits(bits).tobytes()
 
 
-def build_header(name: str, nbytes: int) -> bytes:
-    nm = name.encode()[:19].ljust(19, b"\0")
-    body = MAGIC + struct.pack("<I", nbytes) + nm          # 4 + 4 + 19 = 27
-    return body + struct.pack("<I", zlib.crc32(body) & 0xFFFFFFFF)[:4] + b"\0"
+def build_header(name: str, nbytes: int, repeat: int = 1) -> bytes:
+    """
+    [magic:4][nbytes:4][repeat:1][name:18][crc:4][pad:1] = 32 bytes.
+
+    `repeat` is the repetition factor of the payload that follows.  Carrying it
+    inside the CRC-protected header is what lets a receiver that knows nothing
+    about the transmission (a second device, or the live demo) work out how
+    many bits to expect from the sound alone.
+    """
+    nm = name.encode()[:18].ljust(18, b"\0")
+    body = MAGIC + struct.pack("<IB", nbytes, repeat & 0xFF) + nm   # 4+4+1+18 = 27
+    return body + struct.pack("<I", zlib.crc32(body) & 0xFFFFFFFF) + b"\0"
 
 
 def parse_header(data: bytes):
@@ -41,9 +49,9 @@ def parse_header(data: bytes):
     crc = struct.unpack("<I", data[27:31])[0]
     if (zlib.crc32(body) & 0xFFFFFFFF) != crc:
         return None
-    nbytes = struct.unpack("<I", data[4:8])[0]
-    name = data[8:27].rstrip(b"\0").decode(errors="replace")
-    return dict(name=name, nbytes=nbytes)
+    nbytes, repeat = struct.unpack("<IB", data[4:9])
+    name = data[9:27].rstrip(b"\0").decode(errors="replace")
+    return dict(name=name, nbytes=nbytes, repeat=max(repeat, 1))
 
 
 def packetize(data: bytes) -> bytes:
@@ -88,9 +96,13 @@ def depacketize(data: bytes, n_packets: int):
     return recovered, prr, good
 
 
-def encode_file(data: bytes, name: str = "file.bin"):
+def n_packets_for(nbytes: int) -> int:
+    return (nbytes + PACKET_PAYLOAD - 1) // PACKET_PAYLOAD
+
+
+def encode_file(data: bytes, name: str = "file.bin", repeat: int = 1):
     """File bytes -> transmit bit vector."""
-    frame = build_header(name, len(data)) + packetize(data)
+    frame = build_header(name, len(data), repeat) + packetize(data)
     n_packets = (len(data) + PACKET_PAYLOAD - 1) // PACKET_PAYLOAD
     return bytes_to_bits(frame), dict(n_packets=n_packets, nbytes=len(data),
                                       frame_len=len(frame))
@@ -142,7 +154,7 @@ def fec_decode(bits: np.ndarray, n_info: int, repeat: int = REPEAT) -> np.ndarra
 
 
 def encode_file_fec(data: bytes, name: str = "file.bin", repeat: int = REPEAT):
-    bits, meta = encode_file(data, name)
+    bits, meta = encode_file(data, name, repeat)
     meta["n_info_bits"] = len(bits)
     meta["repeat"] = repeat
     meta["fec"] = f"rep{repeat}"
@@ -152,3 +164,107 @@ def encode_file_fec(data: bytes, name: str = "file.bin", repeat: int = REPEAT):
 def decode_file_fec(bits: np.ndarray, meta: dict):
     info = fec_decode(bits, meta["n_info_bits"], meta.get("repeat", REPEAT))
     return decode_file(info, meta)
+
+
+# ---------------------------------------------------------------------------
+# Self-describing "live" frame - the receiver is told nothing in advance
+# ---------------------------------------------------------------------------
+# The scripted experiments hand the receiver the exact bit count.  A second
+# device, or a person typing into the live demo, cannot do that, so this
+# layout lets the receiver bootstrap itself from the sound alone:
+#
+#     rep-HEADER_REPEAT( header )  +  rep-r( packets )
+#
+# The header always uses the same fixed repetition so the receiver can decode
+# it blind; it then reads the payload length and repetition factor `r` from
+# the header and knows exactly how many more symbols to take.
+#
+# Decoding is *soft*: instead of majority-voting hard bits, the r equalised
+# QPSK symbols carrying each bit are summed before the sign decision.  After
+# MMSE equalisation a symbol from a subcarrier sitting in a spectral null is
+# small, so it contributes little to the sum and a copy from a strong
+# subcarrier dominates.  That is maximal-ratio combining, and it is what makes
+# a full-band transmission from an uncalibrated device decodable.
+
+HEADER_REPEAT = 5
+
+
+def _copy_perm(n_pairs: int, k: int, seed: int = 9001) -> np.ndarray:
+    """Fixed pseudo-random symbol order for repetition copy k, known to both ends."""
+    return np.random.default_rng(seed + k).permutation(n_pairs)
+
+
+def live_fec_encode(bits: np.ndarray, repeat: int) -> np.ndarray:
+    """
+    Repetition code with a pseudo-random *symbol-level* interleaver per copy.
+
+    The plain block-tiled code in :func:`fec_encode` puts copy k of QPSK symbol
+    i at position k*n + i.  Whenever n is a multiple of the number of data
+    subcarriers, every copy of a bit lands on the *same* subcarrier - and
+    n = 576 symbols for a 2-packet payload is a multiple of 9, 12 and 18, which
+    are exactly the sizes Stage-1 calibration produces.  Measured over the air:
+    one subcarrier at -28 dB had BER 0.37 and repetition-3 rescued nothing.
+    A random permutation per copy makes the copies independent whatever the
+    subcarrier count.
+    """
+    pairs = np.asarray(bits, dtype=np.int8).ravel().reshape(-1, 2)
+    copies = [pairs[_copy_perm(len(pairs), k)] for k in range(repeat)]
+    return np.concatenate(copies).ravel()
+
+
+def encode_live(data: bytes, name: str = "message.txt", repeat: int = REPEAT):
+    """File bytes -> self-describing transmit bit vector (+ metadata)."""
+    repeat = max(1, int(repeat))
+    hdr = bytes_to_bits(build_header(name, len(data), repeat))
+    pay = bytes_to_bits(packetize(data))
+    bits = np.concatenate([live_fec_encode(hdr, HEADER_REPEAT),
+                           live_fec_encode(pay, repeat)])
+    meta = dict(n_packets=n_packets_for(len(data)), nbytes=len(data),
+                repeat=repeat, n_header_bits=len(hdr), n_payload_bits=len(pay),
+                header_syms=len(hdr) * HEADER_REPEAT // 2,
+                payload_syms=len(pay) * repeat // 2)
+    return bits, meta
+
+
+def soft_fec_decode(syms: np.ndarray, n_info_bits: int, repeat: int) -> np.ndarray:
+    """
+    Maximal-ratio combine `repeat` interleaved copies of n_info_bits/2 QPSK
+    symbols, then hard-decide.  Missing symbols (a truncated recording) count
+    as zero, i.e. they abstain from the vote.
+    """
+    n_sym = n_info_bits // 2
+    need = n_sym * repeat
+    syms = np.asarray(syms, dtype=complex).ravel()
+    if syms.size < need:
+        syms = np.concatenate([syms, np.zeros(need - syms.size, dtype=complex)])
+    combined = np.zeros(n_sym, dtype=complex)
+    for k in range(repeat):                     # undo each copy's interleaver
+        combined[_copy_perm(n_sym, k)] += syms[k * n_sym:(k + 1) * n_sym]
+    out = np.empty((n_sym, 2), dtype=np.int8)
+    out[:, 0] = combined.real > 0
+    out[:, 1] = combined.imag > 0
+    return out.ravel()
+
+
+def decode_live(syms: np.ndarray):
+    """
+    Equalised payload QPSK symbols (in transmit order) -> decoded file.
+
+    Returns dict(ok, reason, header, data, prr, good, used_syms).
+    """
+    syms = np.asarray(syms, dtype=complex).ravel()
+    n_hdr_bits = HEADER_LEN * 8
+    hdr_syms = n_hdr_bits * HEADER_REPEAT // 2
+    hdr_bits = soft_fec_decode(syms[:hdr_syms], n_hdr_bits, HEADER_REPEAT)
+    hdr = parse_header(bits_to_bytes(hdr_bits))
+    if hdr is None:
+        return dict(ok=False, reason="header failed CRC", header=None,
+                    data=b"", prr=0.0, good=[], used_syms=hdr_syms)
+    n_pk = n_packets_for(hdr["nbytes"])
+    n_pay_bits = n_pk * (4 + PACKET_PAYLOAD + 4) * 8
+    pay_syms = n_pay_bits * hdr["repeat"] // 2
+    pay_bits = soft_fec_decode(syms[hdr_syms:hdr_syms + pay_syms],
+                               n_pay_bits, hdr["repeat"])
+    data, prr, good = depacketize(bits_to_bytes(pay_bits), n_pk)
+    return dict(ok=True, reason="", header=hdr, data=data[:hdr["nbytes"]],
+                prr=prr, good=good, used_syms=hdr_syms + pay_syms)

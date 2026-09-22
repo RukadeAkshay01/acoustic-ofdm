@@ -16,7 +16,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from ofdm.config import OFDMConfig                        # noqa: E402
-from ofdm import modem, receiver, framing, channel, audio_io, echo, calibrate  # noqa: E402
+from ofdm import modem, receiver, framing, channel, audio_io, calibrate  # noqa: E402
 
 CFG = OFDMConfig()
 MESSAGE = (b"ADAPTIVE OFDM ACOUSTIC LINK -- Signal Processing mini project. "

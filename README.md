@@ -1,8 +1,8 @@
 # Adaptive Self-Calibrating OFDM Acoustic Communication
 
 Sends files between the speaker and microphone of ordinary devices using OFDM in
-the 4–12 kHz audio band, with pilot-based channel estimation, adaptive tracking,
-automatic self-calibration, and echo-based distance estimation.
+the 4–12 kHz audio band, with pilot-based channel estimation, adaptive tracking
+and automatic self-calibration.
 
 Signal Processing mini project — Akshay Rukade, Krithika Jayganesh,
 Ritesh Gajanan Sonar.
@@ -28,7 +28,6 @@ with any Linux desktop. No other dependencies — the dashboard is plain HTML/SV
 | `ofdm/channel.py` | simulated acoustic channel (multipath, transducers, clock offset) |
 | `ofdm/receiver.py` | full receive chain, band-pass front end, BER/EVM |
 | `ofdm/framing.py` | CRC packets, file encode/decode, repetition FEC |
-| `ofdm/echo.py` | Stage-4 echo distance estimation |
 | `ofdm/audio_io.py` | ALSA playback/capture, automatic gain calibration |
 | `experiments/` | every measurement in the reports |
 | `dashboard/` | self-contained results dashboard |
@@ -82,7 +81,7 @@ python3 experiments/diagnose_link.py     # repeated-symbol link quality probe
 
 ## Current status
 
-Phases 1 and 2 are complete; Phase 3 adaptive tracking works in simulation and
-echo ranging works. The outstanding gap is **testing across two separate
+Phases 1 and 2 are complete and Phase 3 adaptive tracking works in simulation.
+Echo ranging (Stage 4) was dropped, as the reviewer suggested. The outstanding gap is **testing across two separate
 devices** — all over-the-air work so far is one laptop talking to itself, so both
 ends share a clock. See `reports/00_midterm_report.md` §9.
