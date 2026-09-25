@@ -99,6 +99,14 @@ def main():
             real["ir"] = dec(np.asarray(d["calib_ir"], dtype=float), 400)
         out["real"] = real
 
+    # ---- FEC comparison, long-frame drift, two-device log -------------------
+    for key, path in (("fec", "results/fec_results.json"),
+                      ("drift", "results/drift_results.json"),
+                      ("two_device", "results/two_device_summary.json")):
+        if os.path.exists(path):
+            with open(path) as f:
+                out[key] = json.load(f)
+
     os.makedirs("dashboard", exist_ok=True)
     with open("dashboard/data.json", "w") as f:
         json.dump(out, f, separators=(",", ":"))

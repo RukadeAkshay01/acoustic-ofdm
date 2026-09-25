@@ -153,7 +153,7 @@ footer{border-top:1px solid var(--line);padding-top:18px;font-family:var(--mono)
 <div class="wrap">
 
 <header class="mast">
-  <p class="eyebrow">Signal Processing Mini Project · Mid-term Review</p>
+  <p class="eyebrow">Signal Processing Mini Project</p>
   <h1>Acoustic OFDM Link Bench</h1>
   <p class="sub">An adaptive, self-calibrating OFDM modem that moves files between the
   speaker and microphone of ordinary consumer devices, in the 4–12 kHz audio band.
@@ -286,8 +286,35 @@ footer{border-top:1px solid var(--line);padding-top:18px;font-family:var(--mono)
   <div class="note" id="ota-note"></div>
 </section>
 
+<section id="coding">
+  <div class="shead"><span class="snum">05</span><h2>Error correction and long frames</h2></div>
+  <p class="sdesc">Simulated room (multipath, transducer roll-off, 80 ppm clock offset), adaptive
+  equaliser. Each FEC point is 8 transmissions of a 293-byte file through the same set of rooms for
+  every scheme, so the comparison is paired.</p>
+  <div class="grid2">
+    <div class="card"><h4>Coded bit error rate by scheme</h4>
+      <p class="cap">Rate-½ convolutional code (K = 7, soft-decision Viterbi, interleaved) against
+      repetition-3 and no coding. Hollow points had zero errors.</p>
+      <div class="chartbox"><svg class="chart" id="c-fec"></svg></div>
+      <div class="legend" id="l-fec"></div>
+      <details><summary>Data table</summary><div class="tbl" id="t-fec"></div></details></div>
+    <div class="card"><h4>Long frames under clock drift</h4>
+      <p class="cap">Share of frames recovered exactly for the longest frame tested, with and without
+      the receiver's sample-clock correction pass.</p>
+      <div class="chartbox"><svg class="chart" id="c-drift"></svg></div>
+      <div class="legend" id="l-drift"></div>
+      <details><summary>Data table</summary><div class="tbl" id="t-drift"></div></details></div>
+  </div>
+  <div class="note" id="coding-note"></div>
+  <div class="card" id="two-card" hidden><h4>Two separate devices</h4>
+    <p class="cap">From <span style="font-family:var(--mono)">experiments/run_two_device.py</span>:
+    one device transmits, another records and decodes blind. The clock offset is measured from the
+    received pilots.</p>
+    <div class="tbl" id="t-two"></div></div>
+</section>
+
 <section id="status">
-  <div class="shead"><span class="snum">05</span><h2>Where this stands</h2></div>
+  <div class="shead"><span class="snum">06</span><h2>Where this stands</h2></div>
   <div class="grid2">
     <div class="card"><h4>Working and measured</h4>
       <ul class="tight" id="done"></ul></div>
@@ -697,20 +724,71 @@ if(real){
      one point the speaker was simply muted.`;
 }
 
+/* FEC + drift + two-device */
+if(D.fec){
+  const f = D.fec, sch=[["uncoded",C1,"uncoded"],["rep3",C2,"repetition-3"],["conv",C3,"convolutional ½"]];
+  chart("c-fec",{h:250,ylog:true,y0:FLOOR,y1:1,yfmt:sciFmt,
+    series:sch.map(([k,c,n])=>({x:f.snr_db,y:clamp(f[k].ber),raw:f[k].ber,color:c(),w:2,
+      dots:true,floor:true,name:n})),
+    xlab:"SNR (dB)",ylab:"decoded bit error rate",xtip:v=>v+" dB SNR",
+    ytip:v=>v===0?"0 errors":fmtE(v),aria:"Decoded BER versus SNR for three FEC schemes"});
+  legend("l-fec",sch.map(([k,c,n])=>({name:`${n} · ${Math.round(f[k].goodput_bps)} bit/s`,color:c()})));
+  table("t-fec",["SNR (dB)"].concat(sch.map(s=>s[2]+" BER / exact")),
+    f.snr_db.map((v,i)=>[v].concat(sch.map(([k])=>fmtE(f[k].ber[i])+" / "+Math.round(f[k].exact[i]*100)+"%"))));
+}
+if(D.drift){
+  const rows = D.drift.rows, big = Math.max(...rows.map(r=>r.bytes));
+  const R = rows.filter(r=>r.bytes===big);
+  chart("c-drift",{h:250,y0:0,y1:100,
+    series:[
+      {x:R.map(r=>r.ppm),y:R.map(r=>100*r.exact_uncorrected),color:C2(),w:2,dots:true,name:"uncorrected"},
+      {x:R.map(r=>r.ppm),y:R.map(r=>100*r.exact_corrected),color:C3(),w:2,dots:true,name:"clock-corrected"}],
+    xlab:"sampling-clock offset (ppm)",ylab:"frames exact (%)",xtip:v=>v+" ppm",
+    ytip:v=>Math.round(v)+"%",aria:"Exact frame recovery versus clock offset"});
+  legend("l-drift",[{name:`uncorrected (${R[0].frame_s} s frame)`,color:C2()},
+    {name:"with clock correction",color:C3()}]);
+  table("t-drift",["bytes","frame (s)","ppm","drift (samples)","measured ppm","exact: raw","exact: corrected"],
+    rows.map(r=>[r.bytes,r.frame_s,r.ppm,r.drift_samples,
+      r.est_ppm===null?"—":r.est_ppm.toFixed(0),Math.round(100*r.exact_uncorrected)+"%",
+      Math.round(100*r.exact_corrected)+"%"]));
+}
+if(D.fec && D.drift){
+  const f = D.fec, i0 = f.snr_db.indexOf(2), cr = D.drift.rows;
+  const worst = cr.filter(r=>r.exact_uncorrected<1 && r.exact_corrected===1).length;
+  document.getElementById("coding-note").innerHTML =
+    `<strong>Two gaps from the mid-term, closed in simulation.</strong> The convolutional code carries
+     ${Math.round(f.conv.goodput_bps)} bit/s of file data against ${Math.round(f.rep3.goodput_bps)} for
+     repetition-3, and at 2 dB SNR it delivers ${Math.round(f.conv.exact[i0]*100)}% of files intact where
+     repetition-3 delivers ${Math.round(f.rep3.exact[i0]*100)}%. Separately, frames longer than a couple of seconds
+     break under clock drift once the FFT window slides out of the cyclic prefix. The receiver now measures the offset
+     from the pilots, resamples onto the transmitter's clock and decodes again, which recovers
+     ${worst} of the sweep's settings that failed without it.`;
+}
+if(D.two_device && D.two_device.length){
+  document.getElementById("two-card").hidden = false;
+  const f=(v,d)=>v===null||v===undefined?"—":v.toFixed(d);
+  table("t-two",["setup","distance (m)","frames","decoded","exact","clock (ppm)","EVM (dB)","raw BER"],
+    D.two_device.map(r=>[r.label||"—",f(r.distance_m,2),r.frames,r.decoded,r.exact,
+      f(r.mean_ppm,1)+(r.sd_ppm!==null?" ± "+f(r.sd_ppm,1):""),f(r.mean_evm_db,1),
+      r.mean_raw_ber===null?"—":fmtE(r.mean_raw_ber)]));
+}
+
 /* status lists */
 document.getElementById("done").innerHTML = [
   ["Phase 1 in full.","Measured AWGN BER sits on the coherent-QPSK theory curve from 0 to 8 dB, then hits zero errors in 99 000 bits."],
   ["Phase 2 in full.","Equalisation is the difference between a link that never works and one that works; the unequalised BER never leaves 0.47."],
   ["Adaptive tracking.","Rescues the cross-device clock-offset case, where static calibration fails outright."],
-  ["A real acoustic link.","Text transmitted through a laptop speaker and recovered from its microphone, uncoded BER 8.3 × 10⁻³ at best."]
+  ["A real acoustic link.","Text transmitted through a laptop speaker and recovered from its microphone, uncoded BER 8.3 × 10⁻³ at best."],
+  ["Proper forward error correction.","A rate-½ K = 7 convolutional code with soft Viterbi decoding replaces repetition-3: a third more throughput and decodes about 12 dB lower in simulation."],
+  ["Long frames under clock drift.","The receiver measures the clock offset from its pilots to within a few ppm and resamples before decoding, so 5 s frames survive ±400 ppm."]
 ].map(x=>`<li><strong>${x[0]}</strong> ${x[1]}</li>`).join("");
 
 document.getElementById("todo").innerHTML = [
-  ["Two separate devices.","Everything over-the-air so far is one laptop talking to itself, so both ends share a clock. The adaptive tracker is built for the two-clock case but has only been tested against a simulated offset."],
+  ["Two separate devices.", D.two_device && D.two_device.length
+    ? "Measured — see the two-device table above."
+    : "The tooling is ready (experiments/run_two_device.py, with clock-offset measurement), but no two-device measurement has been logged yet. Everything over-the-air so far is one laptop talking to itself."],
   ["The error floor.","Equalised BER stops falling around 3 × 10⁻³ because of spectral nulls. Bit-loading — fewer bits on weak subcarriers instead of dropping them — is the standard answer and is not implemented."],
-  ["Real forward error correction.","The repetition code that made the over-the-air transfer readable costs two-thirds of the throughput. A convolutional or Reed–Solomon code would do far better."],
-  ["Longer captures.","Frames are under two seconds. Clock drift over a long file transfer has not been characterised."]
-].map(x=>`<li><strong>${x[0]}</strong> ${x[1]}</li>`).join("");
+  ["Coding and drift on hardware.","The convolutional code and the clock-correction pass are verified in simulation only. The two-device frames carry either code (the receiver reads which from the header), so one session over the air can confirm both."]].map(x=>`<li><strong>${x[0]}</strong> ${x[1]}</li>`).join("");
 
 document.getElementById("foot").innerHTML =
   `Every figure on this page is generated from measured output — no illustrative numbers.<br>

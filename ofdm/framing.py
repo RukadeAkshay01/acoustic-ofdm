@@ -14,6 +14,9 @@ import zlib
 import numpy as np
 
 MAGIC = b"AOFD"
+# A repetition factor of 0 is never sent as such (encode_live clamps to >= 1),
+# so the live frame uses it to mean "payload is convolutionally coded".
+CONV_MARK = 0
 HEADER_LEN = 32
 PACKET_PAYLOAD = 64          # bytes of file data per packet
 
@@ -51,7 +54,8 @@ def parse_header(data: bytes):
         return None
     nbytes, repeat = struct.unpack("<IB", data[4:9])
     name = data[9:27].rstrip(b"\0").decode(errors="replace")
-    return dict(name=name, nbytes=nbytes, repeat=max(repeat, 1))
+    code = "conv" if repeat == CONV_MARK else "rep"
+    return dict(name=name, nbytes=nbytes, repeat=max(repeat, 1), code=code)
 
 
 def packetize(data: bytes) -> bytes:
@@ -167,6 +171,28 @@ def decode_file_fec(bits: np.ndarray, meta: dict):
 
 
 # ---------------------------------------------------------------------------
+# Forward error correction: rate-1/2 convolutional code (see ofdm/conv.py)
+# ---------------------------------------------------------------------------
+# Same frame as encode_file, but protected by the K=7 convolutional code with
+# soft-decision Viterbi decoding.  Rate 1/2 instead of repetition-3's 1/3, and
+# a stronger code, so both throughput and robustness improve.
+
+def encode_file_conv(data: bytes, name: str = "file.bin"):
+    from . import conv
+    bits, meta = encode_file(data, name, 1)
+    meta["n_info_bits"] = len(bits)
+    meta["fec"] = "conv"
+    return conv.fec_encode(bits), meta
+
+
+def decode_file_conv(syms: np.ndarray, meta: dict):
+    """Equalised QPSK symbols (transmit order) -> (data, prr, header, good)."""
+    from . import conv
+    info = conv.fec_decode_soft(conv.symbols_to_soft(syms), meta["n_info_bits"])
+    return decode_file(info, meta)
+
+
+# ---------------------------------------------------------------------------
 # Self-describing "live" frame - the receiver is told nothing in advance
 # ---------------------------------------------------------------------------
 # The scripted experiments hand the receiver the exact bit count.  A second
@@ -212,17 +238,29 @@ def live_fec_encode(bits: np.ndarray, repeat: int) -> np.ndarray:
     return np.concatenate(copies).ravel()
 
 
-def encode_live(data: bytes, name: str = "message.txt", repeat: int = REPEAT):
-    """File bytes -> self-describing transmit bit vector (+ metadata)."""
-    repeat = max(1, int(repeat))
-    hdr = bytes_to_bits(build_header(name, len(data), repeat))
+def encode_live(data: bytes, name: str = "message.txt", repeat=REPEAT):
+    """
+    File bytes -> self-describing transmit bit vector (+ metadata).
+
+    `repeat` is a repetition factor, or "conv" for the rate-1/2 convolutional
+    code (ofdm/conv.py).  The header always uses fixed repetition so a blind
+    receiver can read it first and learn which code the payload uses.
+    """
     pay = bytes_to_bits(packetize(data))
-    bits = np.concatenate([live_fec_encode(hdr, HEADER_REPEAT),
-                           live_fec_encode(pay, repeat)])
+    if str(repeat).lower() == "conv":
+        from . import conv
+        hdr = bytes_to_bits(build_header(name, len(data), CONV_MARK))
+        pay_coded = conv.fec_encode(pay)
+        repeat = "conv"
+    else:
+        repeat = max(1, int(repeat))
+        hdr = bytes_to_bits(build_header(name, len(data), repeat))
+        pay_coded = live_fec_encode(pay, repeat)
+    bits = np.concatenate([live_fec_encode(hdr, HEADER_REPEAT), pay_coded])
     meta = dict(n_packets=n_packets_for(len(data)), nbytes=len(data),
                 repeat=repeat, n_header_bits=len(hdr), n_payload_bits=len(pay),
                 header_syms=len(hdr) * HEADER_REPEAT // 2,
-                payload_syms=len(pay) * repeat // 2)
+                payload_syms=len(pay_coded) // 2)
     return bits, meta
 
 
@@ -262,9 +300,15 @@ def decode_live(syms: np.ndarray):
                     data=b"", prr=0.0, good=[], used_syms=hdr_syms)
     n_pk = n_packets_for(hdr["nbytes"])
     n_pay_bits = n_pk * (4 + PACKET_PAYLOAD + 4) * 8
-    pay_syms = n_pay_bits * hdr["repeat"] // 2
-    pay_bits = soft_fec_decode(syms[hdr_syms:hdr_syms + pay_syms],
-                               n_pay_bits, hdr["repeat"])
+    if hdr["code"] == "conv":
+        from . import conv
+        pay_syms = conv.coded_length(n_pay_bits) // 2
+        pay_bits = conv.fec_decode_soft(
+            conv.symbols_to_soft(syms[hdr_syms:hdr_syms + pay_syms]), n_pay_bits)
+    else:
+        pay_syms = n_pay_bits * hdr["repeat"] // 2
+        pay_bits = soft_fec_decode(syms[hdr_syms:hdr_syms + pay_syms],
+                                   n_pay_bits, hdr["repeat"])
     data, prr, good = depacketize(bits_to_bytes(pay_bits), n_pk)
     return dict(ok=True, reason="", header=hdr, data=data[:hdr["nbytes"]],
                 prr=prr, good=good, used_syms=hdr_syms + pay_syms)
