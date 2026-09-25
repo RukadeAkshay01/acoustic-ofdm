@@ -29,6 +29,7 @@
 
 \graphicspath{{figures/}}
 % Anything still to be supplied by the team is printed in red.
+\emergencystretch=2em
 \newcommand{\fillin}[1]{\textcolor{red}{[#1]}}
 
 \begin{document}
@@ -54,7 +55,7 @@
     \textbf{Roll Number:} 24F2100357\\[0.3cm]
     \textbf{Project Code (if any):} Custom (self-proposed)\\[0.3cm]
     \textbf{Submission Date:} 25-09-2026\\[0.3cm]
-    \textbf{Instructor:} \fillin{Instructor Name}\\[0.3cm]
+    \textbf{Instructor:} Vishal\\[0.3cm]
     \textbf{Team Members:} \begin{tabular}[t]{@{}l@{}}Akshay Ajit Rukade --- 24F2100357 \\ J Krithika --- 24F2100165 \\ Ritesh Gajanan Sonar --- 23F3000249\end{tabular}
     \end{flushleft}
 
@@ -87,7 +88,9 @@ equalisation the multipath channel carries nothing (BER 0.47 at every SNR). At a
 one-shot calibration. Self-calibration took the real over-the-air BER from 0.31 to
 $8.3\times10^{-3}$. In simulation, the convolutional code delivers 2\,408\,bit/s of
 file data and every file intact from 4\,dB SNR, where repetition coding needs 18\,dB.
-\fillin{Add one sentence on the two-device result.} Results are published on an
+In a simulated two-device link with independent clocks, the blind receiver measured
+the clock offset with a mean error below 5\,ppm at 6\,dB SNR and above, and the
+convolutional code recovered every frame exactly down to 0\,dB. Results are published on an
 interactive web dashboard.
 
 % ===== 2. INTRODUCTION =====
@@ -543,8 +546,11 @@ line over the whole frame cut the error to a few ppm.
     use 16 trials $\times$ 6\,200 bits per point (about 99\,000 bits).
     \item \textbf{Hardware.} A laptop speaker to the same laptop's microphone via ALSA at
     48\,kHz, carrying a 293-byte text file.
-    \item \textbf{Two devices.} \fillin{Transmitter and receiver models, room, distance,
-    volume}.
+    \item \textbf{Two devices (simulated).} The blind receiver of the two-device test,
+    run through the channel model with the transmitter's clock offset by $-150$, $-50$,
+    $+50$ and $+150$\,ppm, at SNRs from 15 to 0\,dB, carrying a 197-byte message with
+    either code (script \texttt{run\_two\_device\_sim.py}). A hardware test
+    between two separate physical devices was not carried out.
     \item \textbf{Metrics.} Bit error rate (BER), packet recovery rate (PRR, share of
     72-byte packets passing CRC), error-vector magnitude (EVM), exact-file recovery,
     and clock-offset estimation error.
@@ -637,7 +643,6 @@ Stage 1, 8\,dB backoff & $8.3\times10^{-3}$ & 1/5 \\
 + repetition-3 & $1.8\times10^{-2}\rightarrow1.9\times10^{-3}$ coded & 3/5 \\
 + repetition-5 & $5.2\times10^{-2}\rightarrow6.4\times10^{-4}$ coded & 4/5 \\
 Best run (repetition-3, 8\,dB) & $1.2\times10^{-2}\rightarrow3.2\times10^{-4}$ coded & 4/5 \\
-\fillin{convolutional code, 8\,dB} & \fillin{} & \fillin{} \\
 \hline
 \end{tabular}
 \caption{Over the air on real hardware (one laptop, speaker to microphone)}
@@ -696,20 +701,25 @@ offset, 8 paired trials per point}
 \begin{table}[htbp]
 \centering
 \small
-\begin{tabular}{|l|c|c|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|c|}
 \hline
-\textbf{Setup} & \textbf{Distance} & \textbf{Decoded} & \textbf{Exact} & \textbf{Clock offset} & \textbf{EVM} & \textbf{Raw BER} \\
+\textbf{Code (frame length)} & \textbf{SNR} & \textbf{Frames decoded} & \textbf{Exact} & \textbf{Mean clock-estimate error} \\
 \hline
-A $\rightarrow$ B, repetition-3 & 0.5\,m & \fillin{} & \fillin{} & \fillin{} & \fillin{} & \fillin{} \\
-A $\rightarrow$ B, repetition-3 & 1\,m & \fillin{} & \fillin{} & \fillin{} & \fillin{} & \fillin{} \\
-A $\rightarrow$ B, repetition-3 & 2\,m & \fillin{} & \fillin{} & \fillin{} & \fillin{} & \fillin{} \\
-A $\rightarrow$ B, repetition-3 & 3\,m & \fillin{} & \fillin{} & \fillin{} & \fillin{} & \fillin{} \\
-A $\rightarrow$ B, convolutional & 1\,m & \fillin{} & \fillin{} & \fillin{} & \fillin{} & \fillin{} \\
-B $\rightarrow$ A, repetition-3 & 1\,m & \fillin{} & \fillin{} & \fillin{} & \fillin{} & \fillin{} \\
+Repetition-3 (1.18\,s) & 15\,dB & 4/4 & 4/4 & 4.7\,ppm \\
+ & 10\,dB & 4/4 & 4/4 & 1.7\,ppm \\
+ & 6\,dB & 4/4 & 4/4 & 4.7\,ppm \\
+ & 3\,dB & 4/4 & 4/4 & 25.6\,ppm \\
+ & 0\,dB & 4/4 & 1/4 & 73.0\,ppm \\
+\hline
+Convolutional (0.93\,s) & 15\,dB & 4/4 & 4/4 & 2.2\,ppm \\
+ & 10\,dB & 4/4 & 4/4 & 2.1\,ppm \\
+ & 6\,dB & 4/4 & 4/4 & 3.6\,ppm \\
+ & 3\,dB & 4/4 & 4/4 & 24.2\,ppm \\
+ & 0\,dB & 4/4 & \textbf{4/4} & 127.8\,ppm \\
 \hline
 \end{tabular}
-\caption{Two separate devices, 5 frames per row
-(\fillin{from \texttt{run\_two\_device.py report}})}
+\caption{Simulated two-device link: blind receiver, transmitter clock offset by
+$\pm50$ and $\pm150$\,ppm, 197-byte message (\texttt{results/two\_device\_sim.json})}
 \end{table}
 
 \clearpage
@@ -772,9 +782,13 @@ B $\rightarrow$ A, repetition-3 & 1\,m & \fillin{} & \fillin{} & \fillin{} & \fi
     \item \textbf{A standard code beats an ad-hoc one.} The convolutional code is 34\,\%
     faster than repetition-3 and needs about 14\,dB less SNR to deliver every file
     intact. Soft decisions and interleaving are essential to that.
-    \item \textbf{Two-device result.} \fillin{Measured clock offset between the devices;
-    is it stable, and does it flip sign when roles swap? How far does each code reach?
-    Does it confirm the simulated clock-offset result?}
+    \item \textbf{Two-device result (simulated).} With independent transmitter and
+    receiver clocks, the blind receiver measured the offset with a mean error under
+    5\,ppm at 6\,dB SNR and above; at 3\,dB and below the estimate degrades to tens of
+    ppm, although decoding still succeeds. The convolutional code recovered all four
+    frames exactly even at 0\,dB, where repetition-3 recovered one. The same test between
+    two physical devices was not carried out, so the clock-offset result is verified in
+    simulation and on a single laptop only.
     \item \textbf{Limitations of the evidence.} The convolutional-code and drift-correction
     results are from simulation. The single-laptop hardware tests share one clock. Run-to-run
     variation over the air is significant, because the acoustic path changes with room
@@ -791,13 +805,15 @@ channel, and that one-shot calibration fails at ordinary cross-device clock offs
 where adaptive tracking works. Measuring the hardware response first was the single
 largest improvement on real hardware. An interleaved convolutional code with
 soft-decision decoding, plus pilot-based clock-offset correction, make the link both
-faster and far more robust in simulation. \fillin{One sentence on the two-device
-result.}
+faster and far more robust in simulation. A simulated two-device link confirms that
+the receiver measures the clock offset between independent devices and decodes
+blind; the same test on two physical devices remains to be done.
 
 \section{Limitations}
 \begin{itemize}
     \item The strongest results (convolutional code, drift correction) are verified in
-    simulation; over-the-air confirmation is \fillin{complete / pending}.
+    simulation; neither they nor a link between two physical devices have been tested
+    over the air.
     \item Every subcarrier uses QPSK, so weak subcarriers are discarded rather than
     loaded with fewer bits; the uncoded equalised error floor remains.
     \item Throughput is about 2.4\,kbit/s of file data: suitable for text and small
@@ -856,11 +872,18 @@ resource grid.
     \item \textbf{Verification of the module:} ideal loopback BER $=0$, AWGN BER against
     theory, PAPR reduction preserving demodulation, and correct re-derivation of pilot
     and payload sets for a restricted subcarrier configuration.
-    \item \fillin{Post-mid-term work: add what you did on the convolutional code,
-    clock-offset estimation and correction, the two-device test and measurements, the
-    test suite or the dashboard, or delete this item.}
+    \item \textbf{Post-mid-term --- forward error correction:} implemented the
+    rate-$\tfrac12$, $K=7$ convolutional code with generators $(171,133)_8$, the
+    vectorised soft-decision Viterbi decoder (\texttt{ofdm/conv.py}) and the
+    pseudo-random interleaver, and fed it the equalised QPSK values as soft inputs.
+    Integrated it into the file framing and the self-describing live frame (header
+    repetition byte 0 marks a convolutionally coded payload), and ran the FEC
+    comparison (\texttt{run\_fec.py}): 2\,408\,bit/s of file data against
+    1\,794 for repetition-3, with every file intact from 4\,dB SNR instead of 18\,dB.
+    Also wrote the script that generates the report figures from the results files.
     \item \textbf{Documentation:} individual mid-term report (Member~1: modem engine);
-    \fillin{sections of this report you wrote}.
+    in this report, the Abstract and Chapters 1--4 (Introduction, Problem Statement,
+    Goals and Objectives, Methodology).
 \end{itemize}
 
 % ===== 11. ANNEXURE =====
@@ -870,7 +893,12 @@ resource grid.
 \textbf{All linked files must have ``Anyone with the link'' access. If files are inaccessible during evaluation, no marks will be awarded for those components.}
 
 \section{Video Demonstration}
-\textbf{Google Drive Link:} \fillin{PASTE YOUR VIDEO DEMO LINK HERE}
+\textbf{Video link:} \url{https://rukadeakshay01.github.io/acoustic-ofdm/demo.html}
+
+The page plays a 2-minute screen recording (test suite, simulated file transfer with
+the convolutional code, simulated two-device receiver, dashboard walkthrough) and
+includes an audio clip of a real transmitted frame. The recording has no voice-over,
+and no hardware is shown; the hardware results are presented on the dashboard.
 
 The video should clearly demonstrate:
 \begin{itemize}
@@ -881,7 +909,8 @@ The video should clearly demonstrate:
 \end{itemize}
 
 \section{Source Code}
-\textbf{Google Drive Link (ZIP file):} \fillin{PASTE YOUR CODE ZIP LINK HERE}
+\textbf{ZIP file:}\\
+\url{https://github.com/RukadeAkshay01/acoustic-ofdm/archive/refs/heads/main.zip}
 
 \textbf{GitHub repository:} \url{https://github.com/RukadeAkshay01/acoustic-ofdm}
 

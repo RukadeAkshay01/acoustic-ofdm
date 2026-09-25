@@ -8,7 +8,7 @@ Signal Processing mini project — Akshay Rukade, J Krithika,
 Ritesh Gajanan Sonar.
 
 **Results dashboard:** https://rukadeakshay01.github.io/acoustic-ofdm/
-**Final report (draft):** [`reports/05_final_report.md`](reports/05_final_report.md) · all reports in `reports/`
+**Final reports:** [`reports/final/`](reports/final/) (one PDF per member) · **Demo video:** https://rukadeakshay01.github.io/acoustic-ofdm/demo.html · all reports in `reports/`
 
 ## Requirements
 

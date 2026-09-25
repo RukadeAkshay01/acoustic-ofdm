@@ -9,8 +9,9 @@ One report per team member, generated from the course template:
 | `SP_Final_Report_Ritesh_Gajanan_Sonar.tex` / `.pdf` | Ritesh Gajanan Sonar |
 
 The body is shared; only the author and the Individual Contribution chapter differ.
-**Everything still to be supplied is printed in red** (roll numbers, date,
-instructor, two-device results, post-mid-term contributions, video and ZIP links).
+All fields are filled in. The two-device results are from simulation
+(`experiments/run_two_device_sim.py`); a test on two physical devices was not
+carried out, and the reports say so.
 
 Edit `make_final_reports.py` (not the `.tex` files, which it overwrites), then:
 

@@ -6,6 +6,10 @@
 **Live results dashboard:** https://rukadeakshay01.github.io/acoustic-ofdm/
 **Code:** https://github.com/RukadeAkshay01/acoustic-ofdm
 
+> **Superseded:** the submitted final reports are the three PDFs in
+> [`reports/final/`](final/), one per team member. This Markdown file was the
+> working draft and is kept for reference.
+>
 > **Draft status.** Every number in this report is generated from the
 > repository's results files. The one section still waiting on data is §9, the
 > two-device measurement: its tables are marked **[to fill]**. Fill them from
