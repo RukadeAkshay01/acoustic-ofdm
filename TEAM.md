@@ -9,7 +9,7 @@ communication.
 | Member | Owns | Code | Report |
 |---|---|---|---|
 | **Akshay Rukade** | OFDM modulation/demodulation engine — IFFT, cyclic prefix, QPSK, pilot & preamble design, PAPR reduction | `ofdm/modem.py`, `ofdm/config.py` | [01](reports/01_member1_modem_engine.md) |
-| **Krithika Jayganesh** | Channel estimation, pilot design, equalisation, adaptive tracking, Stage-1 self-calibration | `ofdm/equalizer.py`, `ofdm/calibrate.py` | [02](reports/02_member2_channel_estimation.md) |
+| **J Krithika** | Channel estimation, pilot design, equalisation, adaptive tracking, Stage-1 self-calibration | `ofdm/equalizer.py`, `ofdm/calibrate.py` | [02](reports/02_member2_channel_estimation.md) |
 | **Ritesh Gajanan Sonar** | Synchronisation, framing, audio I/O, BER analysis, web dashboard | `ofdm/sync.py`, `ofdm/receiver.py`, `ofdm/channel.py`, `ofdm/framing.py`, `ofdm/audio_io.py`, `experiments/`, `dashboard/` | [03](reports/03_member3_sync_testing_dashboard.md) |
 
 Shared: the experiment scripts and integration debugging.

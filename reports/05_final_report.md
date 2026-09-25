@@ -1,7 +1,7 @@
 # Adaptive Self-Calibrating OFDM Acoustic Communication — Final Report
 
 **Course:** Signal Processing (custom mini project)
-**Team:** Akshay Rukade · Krithika Jayganesh · Ritesh Gajanan Sonar
+**Team:** Akshay Rukade · J Krithika · Ritesh Gajanan Sonar
 **Date:** September 2026 · final review
 **Live results dashboard:** https://rukadeakshay01.github.io/acoustic-ofdm/
 **Code:** https://github.com/RukadeAkshay01/acoustic-ofdm
@@ -402,7 +402,7 @@ From the results so far:
 | Member | Owned |
 |---|---|
 | **Akshay Rukade** | OFDM modulation/demodulation engine: IFFT, cyclic prefix, QPSK, pilot and preamble design, PAPR reduction (`ofdm/modem.py`, `ofdm/config.py`) |
-| **Krithika Jayganesh** | Channel estimation, equalisation, adaptive tracking, Stage-1 self-calibration (`ofdm/equalizer.py`, `ofdm/calibrate.py`) |
+| **J Krithika** | Channel estimation, equalisation, adaptive tracking, Stage-1 self-calibration (`ofdm/equalizer.py`, `ofdm/calibrate.py`) |
 | **Ritesh Gajanan Sonar** | Synchronisation, framing, audio I/O, BER analysis, web dashboard (`ofdm/sync.py`, `ofdm/receiver.py`, `ofdm/channel.py`, `ofdm/framing.py`, `ofdm/audio_io.py`, `experiments/`, `dashboard/`) |
 | **Post-mid-term work** | **[to fill: who owned the convolutional code, clock estimation and correction, two-device tooling and measurements, tests]** |
 
