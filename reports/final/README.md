@@ -6,7 +6,7 @@ One report per team member, generated from the course template:
 |---|---|
 | `SP_Final_Report_Akshay_Rukade.tex` / `.pdf` | Akshay Rukade |
 | `SP_Final_Report_J_Krithika.tex` / `.pdf` | J Krithika |
-| `SP_Final_Report_Ritish_Gajanan_Sonar.tex` / `.pdf` | Ritish Gajanan Sonar |
+| `SP_Final_Report_Ritesh_Gajanan_Sonar.tex` / `.pdf` | Ritesh Gajanan Sonar |
 
 The body is shared; only the author and the Individual Contribution chapter differ.
 **Everything still to be supplied is printed in red** (roll numbers, date,

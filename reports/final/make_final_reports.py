@@ -18,7 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # Names exactly as they should appear on the title page.
 AKSHAY = "Akshay Rukade"
 KRITHIKA = "J Krithika"
-RITESH = "Ritish Gajanan Sonar"
+RITESH = "Ritesh Gajanan Sonar"
 TEAM = f"{AKSHAY}, {KRITHIKA} and {RITESH}"
 
 MEMBERS = [
@@ -97,7 +97,7 @@ worth using.
     estimation and equalisation); \fillin{sections of this report you wrote}.
 \end{itemize}
 """),
-    dict(slug="Ritish_Gajanan_Sonar", name=RITESH,
+    dict(slug="Ritesh_Gajanan_Sonar", name=RITESH,
          role="synchronisation, testing, audio I/O and dashboard",
          individual=r"""
 {\sloppy

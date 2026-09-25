@@ -514,7 +514,7 @@ const FLOOR = 1e-5;
 const clamp = a => a.map(v => v===0 ? FLOOR : Math.max(v,FLOOR));
 
 document.getElementById("byline").innerHTML =
-  ["Akshay Rukade","Krithika Jayganesh","Ritesh Gajanan Sonar"]
+  ["Akshay Rukade","J Krithika","Ritesh Gajanan Sonar"]
   .map(n=>`<span>${n}</span>`).join("") +
   `<span>fs ${sim.config.fs/1000} kHz · N ${sim.config.nfft} · CP ${sim.config.ncp}</span>`;
 

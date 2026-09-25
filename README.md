@@ -4,7 +4,7 @@ Sends files between the speaker and microphone of ordinary devices using OFDM in
 the 4–12 kHz audio band, with pilot-based channel estimation, adaptive tracking
 and automatic self-calibration.
 
-Signal Processing mini project — Akshay Rukade, Krithika Jayganesh,
+Signal Processing mini project — Akshay Rukade, J Krithika,
 Ritesh Gajanan Sonar.
 
 **Results dashboard:** https://rukadeakshay01.github.io/acoustic-ofdm/
