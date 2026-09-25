@@ -56,7 +56,7 @@ h1{font-size:clamp(27px,4.2vw,40px);line-height:1.08;margin:0 0 14px;font-weight
   display:flex;flex-wrap:wrap;gap:6px 18px;}
 
 /* ---------- phase rail ---------- */
-.phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:12px;margin-bottom:30px;}
+.phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px;margin-bottom:30px;}
 .phase{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;
   display:flex;flex-direction:column;gap:7px;position:relative;overflow:hidden;}
 .phase::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--st,var(--ink-3));}
@@ -165,6 +165,9 @@ footer{border-top:1px solid var(--line);padding-top:18px;font-family:var(--mono)
   speaker and microphone of ordinary consumer devices, in the 4–12 kHz audio band.
   This bench shows the complete signal chain and every measurement behind it.</p>
   <p class="byline" id="byline"></p>
+  <p class="byline" id="updated" style="margin-top:8px">Updated 25 Sep 2026 · new: convolutional
+  error correction, sample-clock drift correction and two-device test tooling —
+  <a href="#coding" style="color:inherit">see section 05</a></p>
 </header>
 
 <div class="phases" id="phases"></div>
@@ -527,8 +530,12 @@ const phases = [
    d:"Bits → IFFT → cyclic prefix → speaker → microphone → sync → FFT → bits, with BER measured against theory. The minimum viable project, working."},
   {c:"ok", s:"Complete", t:"Phase 2 — Estimation & equalisation",
    d:"Pilot symbols, least-squares channel estimation and MMSE equalisation. BER improvement over the unequalised link is decisive at every SNR."},
-  {c:"part", s:"Partly done", t:"Phase 3 — Adaptive tracking",
-   d:"Per-symbol pilot tracking works and rescues the cross-device clock-offset case outright. Two-device testing is still outstanding."}
+  {c:"part", s:"Simulation", t:"Phase 3 — Adaptive tracking",
+   d:"Per-symbol pilot tracking rescues the cross-device clock-offset case outright, and the receiver now measures and corrects the clock offset itself. Verified in simulation."},
+  {c:"part", s:"Simulation", t:"Error correction",
+   d:"Rate-½ convolutional code with soft Viterbi decoding replaces repetition-3: more throughput, and files survive about 12 dB less SNR."},
+  {c:"no", s:"Next", t:"Two separate devices",
+   d:"Test tooling and protocol are ready (run_two_device.py). The over-the-air measurement between two devices has not been run yet."}
 ];
 document.getElementById("phases").innerHTML = phases.map(p=>
   `<div class="phase ${p.c}"><span class="chip ${p.c}">${p.s}</span>
@@ -549,6 +556,11 @@ const tiles = [
   {k:"Over-the-air BER", v:bestOta!==null?fmtE(bestOta):"—", u:"",
    n:"real speaker to real microphone, uncoded"}
 ];
+if(D.fec) tiles.push({k:"Coded file rate", v:Math.round(D.fec.conv.goodput_bps).toLocaleString(), u:"bit/s",
+   n:`convolutional ½, vs ${Math.round(D.fec.rep3.goodput_bps).toLocaleString()} for repetition-3 (simulated)`});
+if(D.drift){ const m = Math.max(...D.drift.rows.filter(r=>r.exact_corrected===1).map(r=>Math.abs(r.ppm)));
+  tiles.push({k:"Clock drift survived", v:"±"+m, u:"ppm",
+   n:`on ${Math.max(...D.drift.rows.map(r=>r.frame_s))} s frames, with clock correction (simulated)`}); }
 document.getElementById("tiles").innerHTML = tiles.map(t=>
   `<div class="tile"><div class="k">${t.k}</div>
    <div class="v">${t.v}<span class="u">${t.u}</span></div><div class="n">${t.n}</div></div>`).join("");
