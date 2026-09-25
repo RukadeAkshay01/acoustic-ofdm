@@ -8,7 +8,7 @@ Signal Processing mini project — Akshay Rukade, Krithika Jayganesh,
 Ritesh Gajanan Sonar.
 
 **Results dashboard:** https://rukadeakshay01.github.io/acoustic-ofdm/
-**Reports:** `reports/`
+**Final report (draft):** [`reports/05_final_report.md`](reports/05_final_report.md) · all reports in `reports/`
 
 ## Requirements
 
@@ -123,4 +123,5 @@ What remains:
    (`--repeat 3` or `--repeat conv`), so the same session can compare them.
 3. **Bit-loading** (optional): put fewer bits on weak subcarriers instead of
    dropping them, to remove the ~3 × 10⁻³ equalised error floor.
-4. **Final report**, built from the regenerated dashboard data.
+4. **Final report**: drafted in `reports/05_final_report.md`; fill the sections
+   marked **[to fill]** once the two-device measurement is done.
