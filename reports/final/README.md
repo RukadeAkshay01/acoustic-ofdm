@@ -4,7 +4,7 @@ One report per team member, generated from the course template:
 
 | File | Author |
 |---|---|
-| `SP_Final_Report_Akshay_Rukade.tex` / `.pdf` | Akshay Rukade |
+| `SP_Final_Report_Akshay_Rukade.tex` / `.pdf` | Akshay Ajit Rukade |
 | `SP_Final_Report_J_Krithika.tex` / `.pdf` | J Krithika |
 | `SP_Final_Report_Ritesh_Gajanan_Sonar.tex` / `.pdf` | Ritesh Gajanan Sonar |
 

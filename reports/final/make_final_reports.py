@@ -16,10 +16,14 @@ import os
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # Names exactly as they should appear on the title page.
-AKSHAY = "Akshay Rukade"
+AKSHAY = "Akshay Ajit Rukade"
 KRITHIKA = "J Krithika"
 RITESH = "Ritesh Gajanan Sonar"
 TEAM = f"{AKSHAY}, {KRITHIKA} and {RITESH}"
+ROLL = {AKSHAY: "24F2100357", KRITHIKA: "24F2100165", RITESH: "23F3000249"}
+SUBMISSION_DATE = "25-09-2026"
+TEAM_BLOCK = r"\begin{tabular}[t]{@{}l@{}}" + r" \\ ".join(
+    f"{n} --- {ROLL[n]}" for n in (AKSHAY, KRITHIKA, RITESH)) + r"\end{tabular}"
 
 MEMBERS = [
     dict(slug="Akshay_Rukade", name=AKSHAY, role="OFDM modulation/demodulation engine",
@@ -185,19 +189,20 @@ TITLE = r"""
     {\large BS Electronic Systems}\\[2cm]
 
     \rule{\linewidth}{0.5mm}\\[0.5cm]
-    {\Huge \textbf{Adaptive Self-Calibrating OFDM Acoustic Communication}}\\[0.4cm]
-    {\Large Sending files between the speaker and microphone of ordinary devices in the 4--12\,kHz band}\\
+    {\Huge \textbf{Adaptive Self-Calibrating OFDM-Based Acoustic Communication System}\par}
+    \vspace{0.4cm}
+    {\Large for Reliable Cross-Device File Transfer}\\
     \rule{\linewidth}{0.5mm}\\[2cm]
 
     {\large Signal Processing Project Report}\\[2cm]
 
     \begin{flushleft}
     \textbf{Author:} %%NAME%%\\[0.3cm]
-    \textbf{Roll Number:} \fillin{Roll No.}\\[0.3cm]
-    \textbf{Project Code (if any):} Custom\\[0.3cm]
-    \textbf{Submission Date:} \fillin{DD-MM-YYYY}\\[0.3cm]
+    \textbf{Roll Number:} %%ROLL%%\\[0.3cm]
+    \textbf{Project Code (if any):} Custom (self-proposed)\\[0.3cm]
+    \textbf{Submission Date:} %%DATE%%\\[0.3cm]
     \textbf{Instructor:} \fillin{Instructor Name}\\[0.3cm]
-    \textbf{Team:} %%TEAM%%
+    \textbf{Team Members:} %%TEAMBLOCK%%
     \end{flushleft}
 
     \vfill
@@ -1038,7 +1043,8 @@ def cite_numbers(tex):
 def main():
     for m in MEMBERS:
         tex = PREAMBLE + TITLE + BODY
-        for key, val in (("%%NAME%%", m["name"]), ("%%TEAM%%", TEAM),
+        for key, val in (("%%NAME%%", m["name"]), ("%%TEAMBLOCK%%", TEAM_BLOCK), ("%%TEAM%%", TEAM),
+                         ("%%ROLL%%", ROLL[m["name"]]), ("%%DATE%%", SUBMISSION_DATE),
                          ("%%ROLE%%", m["role"]), ("%%INDIVIDUAL%%", m["individual"].strip())):
             tex = tex.replace(key, val)
         tex = cite_numbers(tex)
