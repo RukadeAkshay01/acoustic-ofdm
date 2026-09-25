@@ -167,6 +167,28 @@ def decode_file_fec(bits: np.ndarray, meta: dict):
 
 
 # ---------------------------------------------------------------------------
+# Forward error correction: rate-1/2 convolutional code (see ofdm/conv.py)
+# ---------------------------------------------------------------------------
+# Same frame as encode_file, but protected by the K=7 convolutional code with
+# soft-decision Viterbi decoding.  Rate 1/2 instead of repetition-3's 1/3, and
+# a stronger code, so both throughput and robustness improve.
+
+def encode_file_conv(data: bytes, name: str = "file.bin"):
+    from . import conv
+    bits, meta = encode_file(data, name, 1)
+    meta["n_info_bits"] = len(bits)
+    meta["fec"] = "conv"
+    return conv.fec_encode(bits), meta
+
+
+def decode_file_conv(syms: np.ndarray, meta: dict):
+    """Equalised QPSK symbols (transmit order) -> (data, prr, header, good)."""
+    from . import conv
+    info = conv.fec_decode_soft(conv.symbols_to_soft(syms), meta["n_info_bits"])
+    return decode_file(info, meta)
+
+
+# ---------------------------------------------------------------------------
 # Self-describing "live" frame - the receiver is told nothing in advance
 # ---------------------------------------------------------------------------
 # The scripted experiments hand the receiver the exact bit count.  A second

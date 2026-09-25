@@ -20,16 +20,22 @@ Shared: the experiment scripts and integration debugging.
 |---|---|
 | 1 — OFDM end to end, BER vs theory | Done |
 | 2 — Pilots, channel estimation, equalisation | Done |
-| 2 — Two separate devices | **Open — next task** |
+| 2 — Two separate devices | **Tooling ready (`experiments/run_two_device.py`); measurement open — next task** |
 | 3 — Adaptive tracking | Done in simulation |
+| Proper FEC (convolutional, `ofdm/conv.py`) | Done in simulation |
+| Long-frame clock drift correction | Done in simulation |
 | Web dashboard | Done |
 
 ## Running it
 
 ```bash
+python3 -m unittest discover -s tests -t .        # test suite (~1 s)
 python3 experiments/run_ber.py                    # BER experiments (~2 min)
 python3 experiments/run_acoustic.py --sim         # file transfer, no audio hardware needed
 python3 experiments/run_acoustic.py --mode adaptive --backoff 8 --fec 3   # real speaker → mic
+python3 experiments/run_two_device.py sim         # two-device link, simulated
 ```
+
+Two-device procedure: [`reports/04_two_device_test_protocol.md`](reports/04_two_device_test_protocol.md).
 
 See [`README.md`](README.md) for the full command reference and setup notes.

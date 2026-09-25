@@ -103,3 +103,50 @@ def estimate_impulse_response(rx: np.ndarray, cfg: OFDMConfig = DEFAULT,
     if seg.size < length:
         seg = np.concatenate([seg, np.zeros(length - seg.size)])
     return seg / (np.max(np.abs(seg)) or 1.0)
+
+
+def estimate_clock_ppm(grid_raw: np.ndarray, cfg: OFDMConfig = DEFAULT):
+    """
+    Sampling-clock offset between transmitter and receiver, in ppm.
+
+    A clock offset eps makes the FFT window slide by eps*L samples per OFDM
+    symbol (L = symbol length with CP), which rotates subcarrier k by an extra
+    2*pi*k*eps*L/N every symbol.  Measured at the pilots, the phase *slope*
+    across frequency therefore grows linearly with time.
+
+    For each pair of neighbouring pilots (k_i, k_i+1) the product
+        Z_n = P_n[i+1] conj(P_n[i])     (P = received pilot / known pilot)
+    cancels the common phase and leaves the channel's fixed phase difference
+    plus 2*pi*dk*eps*L*n/N.  Unwrapping angle(Z_n) along n and fitting a line
+    gives the drift rate; a straight-line fit over the whole frame averages
+    noise down as N^-1.5, far better than differencing adjacent symbols.
+    Pairs are weighted by their mean |Z| so pilots in spectral nulls count
+    for little.
+
+    `grid_raw` is the un-equalised resource grid (row 0 is the reference
+    symbol and is skipped).  Returns (ppm, n_symbols) or (nan, 0) if the frame
+    is too short.  Positive ppm = the receiver's sample clock runs slow
+    relative to the transmitter's (the channel.apply_channel convention).
+    """
+    from .modem import pilot_values
+    g = np.asarray(grid_raw)
+    if g.ndim != 2 or g.shape[0] < 6:
+        return float("nan"), 0
+    pil_pos = np.searchsorted(cfg.data_bins, cfg.pilot_bins)
+    P = g[1:, pil_pos] / pilot_values(cfg)[None, :]
+    Z = P[:, 1:] * np.conj(P[:, :-1])                 # [symbol, pair]
+    n = np.arange(Z.shape[0], dtype=float)
+    dk = np.diff(cfg.pilot_bins).astype(float)
+    rates, weights = [], []
+    for i in range(Z.shape[1]):
+        w = float(np.mean(np.abs(Z[:, i])))
+        if w <= 0:
+            continue
+        ph = np.unwrap(np.angle(Z[:, i]))
+        rates.append(np.polyfit(n, ph, 1)[0] / dk[i])  # rad / symbol / bin
+        weights.append(w)
+    if not weights:
+        return float("nan"), 0
+    rate = float(np.average(rates, weights=weights))
+    eps = rate / (2 * np.pi * cfg.sym_len / cfg.nfft)
+    return float(eps * 1e6), int(P.shape[0])

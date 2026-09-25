@@ -1,0 +1,5 @@
+# Core DSP - everything in ofdm/ and experiments/ needs only these two.
+numpy>=1.22
+scipy>=1.8
+# Real over-the-air tests additionally need ALSA's aplay/arecord (system
+# package alsa-utils), not a Python package.

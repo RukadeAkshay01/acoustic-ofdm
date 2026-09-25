@@ -177,7 +177,8 @@ Built as a single self-contained HTML page with hand-written SVG charts, showing
 the full pipeline the review comments asked for: transmitted signal, received
 signal, matched-filter output, FFT spectrum, channel estimate, per-symbol phase
 correction, equalised constellations for all three modes, decoded results and BER
-metrics — plus the measured hardware response and the echo-ranging accuracy.
+metrics — plus the measured hardware response. (The echo-ranging panel was
+removed when Stage 4 was dropped after the mid-term review.)
 
 Charts are generated from `dashboard/data.json`, which is exported directly from the
 experiment scripts, so the page cannot drift from the measurements. It has crosshair

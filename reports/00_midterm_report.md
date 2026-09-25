@@ -248,6 +248,10 @@ transmit power. Clip harder and an irreducible distortion floor appears.
 
 ## 8. Stage 4 — echo ranging
 
+> **Post-review note:** Stage 4 was dropped after the mid-term review, as the
+> reviewer suggested, and `ofdm/echo.py` was removed from the repository. The
+> section below is kept as submitted.
+
 Kept because it reuses `sync.matched_filter` unchanged: transmit the chirp, find
 the direct arrival, find the reflection after it, `distance = c·Δt/2`.
 
@@ -264,6 +268,13 @@ to be done.
 ---
 
 ## 9. Remaining work (weeks 5–7)
+
+> **Post-review update:** proper FEC (a rate-½ K = 7 convolutional code,
+> `ofdm/conv.py`) and long-frame drift (clock-offset estimation and correction,
+> `ofdm/sync.py` / `ofdm/live.py`) are now implemented and verified in
+> simulation. The two-device test tooling is in `experiments/run_two_device.py`,
+> with the procedure in `reports/04_two_device_test_protocol.md`. Echo ranging
+> was dropped. See `README.md` for current status.
 
 | Item | Why it matters | Effort |
 |---|---|---|
@@ -286,7 +297,7 @@ ofdm/calibrate.py    Stage-1 response measurement and subcarrier selection
 ofdm/channel.py      simulated acoustic channel (multipath, transducers, clock offset)
 ofdm/receiver.py     full receive chain
 ofdm/framing.py      CRC packets, file encode/decode, repetition FEC
-ofdm/echo.py         Stage-4 distance estimation
+ofdm/echo.py         Stage-4 distance estimation (removed after review)
 ofdm/audio_io.py     ALSA playback/capture, automatic gain calibration
 
 experiments/run_ber.py           BER experiments A–D

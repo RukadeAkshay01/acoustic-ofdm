@@ -16,7 +16,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from ofdm.config import OFDMConfig                        # noqa: E402
-from ofdm import modem, receiver, framing, channel, audio_io, calibrate  # noqa: E402
+from ofdm import modem, receiver, framing, channel, audio_io, calibrate, conv  # noqa: E402
 
 CFG = OFDMConfig()
 MESSAGE = (b"ADAPTIVE OFDM ACOUSTIC LINK -- Signal Processing mini project. "
@@ -35,10 +35,13 @@ def main():
     ap.add_argument("--out", default=None,
                     help="output .npz (default: acoustic_run.npz for real "
                          "captures, acoustic_sim.npz for --sim)")
-    ap.add_argument("--backoff", type=float, default=15.0,
-                    help="keep subcarriers within this many dB of the best one")
-    ap.add_argument("--fec", type=int, default=0, metavar="N",
-                    help="repetition-N forward error correction (0 = off)")
+    ap.add_argument("--backoff", type=float, default=8.0,
+                    help="keep subcarriers within this many dB of the best one "
+                         "(8 measured best on the test laptop)")
+    ap.add_argument("--fec", default="3", metavar="N|conv",
+                    help="N = repetition-N FEC (0 = off), conv = rate-1/2 "
+                         "convolutional code with soft Viterbi decoding "
+                         "(default 3: uncoded frames fail even in simulation)")
     ap.add_argument("--no-calib", action="store_true",
                     help="skip Stage-1 subcarrier calibration")
     args = ap.parse_args()
@@ -75,7 +78,15 @@ def main():
               f"{len(calib_report['bins'])} "
               f"({calib_report['kept_frac']*100:.0f}%)\n")
 
-    if args.fec:
+    use_conv = args.fec.lower() == "conv"
+    if not use_conv:
+        try:
+            args.fec = int(args.fec)
+        except ValueError:
+            ap.error("--fec must be an integer or 'conv'")
+    if use_conv:
+        bits, fmeta = framing.encode_file_conv(MESSAGE, "message.txt")
+    elif args.fec:
         bits, fmeta = framing.encode_file_fec(MESSAGE, "message.txt", args.fec)
     else:
         bits, fmeta = framing.encode_file(MESSAGE, "message.txt")
@@ -107,11 +118,16 @@ def main():
         return 1
 
     b, errs, n = receiver.ber(bits, r["bits"])
-    if args.fec:
+    if use_conv:
+        info_tx, _ = framing.encode_file(MESSAGE, "message.txt", 1)
+        info_rx = conv.fec_decode_soft(conv.symbols_to_soft(r["symbols"]),
+                                       fmeta["n_info_bits"])
+        b_post, errs_post, n_post = receiver.ber(info_tx, info_rx)
+        data, prr, hdr, good = framing.decode_file_conv(r["symbols"], fmeta)
+    elif args.fec:
         info_tx = bits[: fmeta["n_info_bits"]]
         info_rx = framing.fec_decode(r["bits"], fmeta["n_info_bits"], args.fec)
         b_post, errs_post, n_post = receiver.ber(info_tx, info_rx)
-    if args.fec:
         data, prr, hdr, good = framing.decode_file_fec(r["bits"], fmeta)
     else:
         data, prr, hdr, good = framing.decode_file(r["bits"], fmeta)
@@ -121,7 +137,7 @@ def main():
     print(f"equaliser    : {args.mode}")
     print(f"EVM          : {r['evm_db']:.1f} dB")
     print(f"BER (raw)    : {b:.3e}  ({errs}/{n} bits)")
-    if args.fec:
+    if use_conv or args.fec:
         print(f"BER (coded)  : {b_post:.3e}  ({errs_post}/{n_post} bits)")
     print(f"packets      : {sum(good)}/{len(good)} passed CRC  (PRR {prr*100:.1f}%)")
     print(f"header       : {hdr}")
@@ -139,6 +155,7 @@ def main():
         H_history=r["H_history"], grid_raw=r["grid_raw"], grid_eq=r["grid_eq"],
         env=r["sync"]["env"], start=r["start"], cpe=r["cpe"],
         n_sym=meta["n_sym"], real=not args.sim, ok=ok, n_bits=len(bits),
+        fec=str(args.fec),
         active_bins=np.array(cfg.active_bins, dtype=int),
         data_bins=cfg.data_bins, pilot_bins=cfg.pilot_bins,
         calib_db=(calib_report["bin_db"] if calib_report else np.array([])),
