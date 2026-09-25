@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "Adaptive Self-Calibrating OFDM-Based Acoustic Communication System for Reliable Cross-Device File Transfer"
+abstract: >-
+  An OFDM modem that sends files between the speaker and microphone of ordinary
+  devices in the 4-12 kHz band, with pilot-based channel estimation, MMSE
+  equalisation, adaptive tracking, Stage-1 self-calibration, a rate-1/2
+  convolutional code and sampling-clock-offset correction. Signal Processing
+  project, BS Electronic Systems, IIT Madras.
+type: software
+authors:
+  - given-names: Akshay Ajit
+    family-names: Rukade
+    affiliation: "IIT Madras, BS Electronic Systems (24F2100357)"
+  - given-names: J
+    family-names: Krithika
+    affiliation: "IIT Madras, BS Electronic Systems (24F2100165)"
+  - given-names: Ritesh Gajanan
+    family-names: Sonar
+    affiliation: "IIT Madras, BS Electronic Systems (23F3000249)"
+repository-code: "https://github.com/RukadeAkshay01/acoustic-ofdm"
+url: "https://rukadeakshay01.github.io/acoustic-ofdm/"
+date-released: "2026-09-25"

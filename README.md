@@ -4,8 +4,10 @@ Sends files between the speaker and microphone of ordinary devices using OFDM in
 the 4–12 kHz audio band, with pilot-based channel estimation, adaptive tracking
 and automatic self-calibration.
 
-Signal Processing mini project — Akshay Rukade, J Krithika,
-Ritesh Gajanan Sonar.
+Signal Processing project, BS Electronic Systems, IIT Madras.
+
+**Authors:** Akshay Ajit Rukade (24F2100357) · J Krithika (24F2100165) ·
+Ritesh Gajanan Sonar (23F3000249). Who owned what: [`TEAM.md`](TEAM.md).
 
 **Results dashboard:** https://rukadeakshay01.github.io/acoustic-ofdm/
 **Final reports:** [`reports/final/`](reports/final/) (one PDF per member) · **Demo video:** https://rukadeakshay01.github.io/acoustic-ofdm/demo.html · all reports in `reports/`
