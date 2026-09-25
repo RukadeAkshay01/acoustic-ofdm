@@ -159,7 +159,7 @@ footer{border-top:1px solid var(--line);padding-top:18px;font-family:var(--mono)
 <div class="wrap">
 
 <header class="mast">
-  <p class="eyebrow">Signal Processing Mini Project</p>
+  <p class="eyebrow">Signal Processing Mini Project · Final Review</p>
   <h1>Acoustic OFDM Link Bench</h1>
   <p class="sub">An adaptive, self-calibrating OFDM modem that moves files between the
   speaker and microphone of ordinary consumer devices, in the 4–12 kHz audio band.
@@ -774,7 +774,7 @@ if(D.fec && D.drift){
   const f = D.fec, i0 = f.snr_db.indexOf(2), cr = D.drift.rows;
   const worst = cr.filter(r=>r.exact_uncorrected<1 && r.exact_corrected===1).length;
   document.getElementById("coding-note").innerHTML =
-    `<strong>Two gaps from the mid-term, closed in simulation.</strong> The convolutional code carries
+    `<strong>Two remaining gaps, closed in simulation.</strong> The convolutional code carries
      ${Math.round(f.conv.goodput_bps)} bit/s of file data against ${Math.round(f.rep3.goodput_bps)} for
      repetition-3, and at 2 dB SNR it delivers ${Math.round(f.conv.exact[i0]*100)}% of files intact where
      repetition-3 delivers ${Math.round(f.rep3.exact[i0]*100)}%. Separately, frames longer than a couple of seconds
