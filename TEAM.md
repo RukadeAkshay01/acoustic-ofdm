@@ -4,7 +4,7 @@ Signal Processing mini project — adaptive self-calibrating OFDM acoustic
 communication.
 
 **Results dashboard:** https://rukadeakshay01.github.io/acoustic-ofdm/
-**Full write-up:** [`reports/00_midterm_report.md`](reports/00_midterm_report.md)
+**Reports:** [mid-term report](reports/00_midterm_report.md) · [two-device test protocol](reports/04_two_device_test_protocol.md)
 
 | Member | Owns | Code | Report |
 |---|---|---|---|
