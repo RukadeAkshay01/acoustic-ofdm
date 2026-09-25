@@ -53,6 +53,15 @@ TEXT = (b"TWO-DEVICE TEST -- adaptive OFDM acoustic link. Separate speaker, "
         b"line the clock-offset tracking works on real hardware. 0123456789")
 
 
+def fec_arg(v):
+    if str(v).lower() == "conv":
+        return "conv"
+    n = int(v)
+    if n < 1:
+        raise argparse.ArgumentTypeError("repetition factor must be >= 1")
+    return n
+
+
 def load_payload(args):
     if getattr(args, "file", None):
         with open(args.file, "rb") as f:
@@ -69,7 +78,8 @@ def cmd_tx(args):
     data, name = load_payload(args)
     x, bits, fmeta, _ = live.build_frame(data, name, args.repeat, DEFAULT)
     print(DEFAULT.summary())
-    print(f"\nframe: {len(data)} bytes, repetition {args.repeat}, "
+    code = "convolutional rate 1/2" if args.repeat == "conv" else f"repetition {args.repeat}"
+    print(f"\nframe: {len(data)} bytes, {code}, "
           f"{len(x) / DEFAULT.fs:.2f} s of audio")
     if args.wav:
         gap = np.zeros(int(args.gap * DEFAULT.fs))
@@ -281,8 +291,11 @@ def main():
     def payload_opts(p):
         p.add_argument("--text", help="message to send (default: built-in test text)")
         p.add_argument("--file", help="send / expect this file instead")
-        p.add_argument("--repeat", type=int, default=3,
-                       help="repetition factor of the live frame (default 3)")
+        p.add_argument("--repeat", type=fec_arg, default=3, metavar="N|conv",
+                       help="payload code: repetition factor N (default 3) or "
+                            "conv for the rate-1/2 convolutional code. The "
+                            "receiver reads the code from the frame header; "
+                            "on rx this only matters for BER scoring")
 
     p = sub.add_parser("tx", help="transmit from this device")
     payload_opts(p)

@@ -97,7 +97,8 @@ python3 experiments/run_two_device.py report
 The receiver is blind, measures the clock offset between the two devices in ppm,
 and logs every frame to `results/two_device_log.jsonl`. `tx --wav frames.wav`
 writes the frames to a file so a phone can be the transmitter, and `rx --wav`
-decodes any recording. `sim` runs the same thing through the channel model. Full
+decodes any recording. `--repeat conv` sends the payload with the convolutional
+code instead of repetition-3; the receiver detects which from the header. `sim` runs the same thing through the channel model. Full
 procedure: [`reports/04_two_device_test_protocol.md`](reports/04_two_device_test_protocol.md).
 
 ## Current status
@@ -118,9 +119,8 @@ What remains:
 1. **Run the two-device test** on real hardware (protocol above) and record the
    measured clock offset, EVM and BER against distance.
 2. **Confirm the convolutional code and drift correction over the air.** Both
-   are verified in simulation only. The live frame format (`ofdm/live.py`) still
-   uses soft repetition; moving it to the convolutional code needs a header field
-   for the code type.
+   are verified in simulation only. The two-device frames support both codes
+   (`--repeat 3` or `--repeat conv`), so the same session can compare them.
 3. **Bit-loading** (optional): put fewer bits on weak subcarriers instead of
    dropping them, to remove the ~3 × 10⁻³ equalised error floor.
 4. **Final report**, built from the regenerated dashboard data.

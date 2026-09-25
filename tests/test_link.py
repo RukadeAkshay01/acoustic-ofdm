@@ -45,6 +45,15 @@ class TestBlindLink(unittest.TestCase):
         self.assertEqual(r["data"], MSG)
         self.assertAlmostEqual(r["clock_ppm"], -120, delta=15)
 
+    def test_blind_decode_conv_frame(self):
+        x, bits, _, _ = live.build_frame(MSG, "m.txt", "conv", DEFAULT)
+        rx, info = channel.apply_channel(x, 8, DEFAULT, delay=6000, clock_ppm=90,
+                                         rng=np.random.default_rng(8))
+        r = live.demodulate_blind(rx, DEFAULT, noise_var=info["noise_var"])
+        self.assertTrue(r["ok"])
+        self.assertEqual(r["header"]["code"], "conv")
+        self.assertEqual(r["data"], MSG)
+
     def test_no_signal_reports_sync_failure(self):
         noise = np.random.default_rng(0).normal(0, 0.01, 48000)
         r = live.demodulate_blind(noise, DEFAULT)

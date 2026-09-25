@@ -788,7 +788,7 @@ document.getElementById("todo").innerHTML = [
     ? "Measured — see the two-device table above."
     : "The tooling is ready (experiments/run_two_device.py, with clock-offset measurement), but no two-device measurement has been logged yet. Everything over-the-air so far is one laptop talking to itself."],
   ["The error floor.","Equalised BER stops falling around 3 × 10⁻³ because of spectral nulls. Bit-loading — fewer bits on weak subcarriers instead of dropping them — is the standard answer and is not implemented."],
-  ["Coding and drift on hardware.","The convolutional code and the clock-correction pass are verified in simulation only; both need confirming over the air."]].map(x=>`<li><strong>${x[0]}</strong> ${x[1]}</li>`).join("");
+  ["Coding and drift on hardware.","The convolutional code and the clock-correction pass are verified in simulation only. The two-device frames carry either code (the receiver reads which from the header), so one session over the air can confirm both."]].map(x=>`<li><strong>${x[0]}</strong> ${x[1]}</li>`).join("");
 
 document.getElementById("foot").innerHTML =
   `Every figure on this page is generated from measured output — no illustrative numbers.<br>

@@ -13,7 +13,7 @@ class TestFraming(unittest.TestCase):
         h = framing.build_header("report.pdf", 12345, 3)
         self.assertEqual(len(h), framing.HEADER_LEN)
         self.assertEqual(framing.parse_header(h),
-                         dict(name="report.pdf", nbytes=12345, repeat=3))
+                         dict(name="report.pdf", nbytes=12345, repeat=3, code="rep"))
 
     def test_header_crc_rejects_corruption(self):
         h = bytearray(framing.build_header("a.txt", 10, 1))
@@ -55,6 +55,21 @@ class TestFraming(unittest.TestCase):
         out = framing.decode_live(syms)
         self.assertTrue(out["ok"])
         self.assertEqual(out["data"], self.DATA)
+
+    def test_live_frame_conv(self):
+        from ofdm import modem
+        bits, meta = framing.encode_live(self.DATA, "m.txt", "conv")
+        self.assertEqual(meta["repeat"], "conv")
+        syms = modem.qpsk_modulate(bits)
+        hdr_syms = framing.HEADER_LEN * 8 * framing.HEADER_REPEAT // 2
+        rng = np.random.default_rng(1)
+        pay = np.arange(hdr_syms, syms.size)
+        syms[rng.choice(pay, pay.size // 25, replace=False)] *= -0.5
+        out = framing.decode_live(syms)
+        self.assertTrue(out["ok"])
+        self.assertEqual(out["header"]["code"], "conv")
+        self.assertEqual(out["data"], self.DATA)
+        self.assertEqual(out["used_syms"], len(bits) // 2)
 
 
 if __name__ == "__main__":

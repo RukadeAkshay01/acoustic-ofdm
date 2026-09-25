@@ -64,7 +64,15 @@ and press play:
 python3 experiments/run_two_device.py tx --wav frames.wav --count 5 --gap 3
 ```
 
-Repeat at **0.5 m, 1 m, 2 m, 3 m**. Then, if time allows:
+Repeat at **0.5 m, 1 m, 2 m, 3 m**. Then repeat each distance with the
+convolutional code. Add `--repeat conv` on **both** ends and use a different
+`--label`, e.g. `"A->B conv"`. The receiver reads the code from the frame
+header either way. On the tx side the flag picks the code; on the rx side it is
+only used to score BER. In simulation, conv frames are 20 % shorter and decode
+exactly down to 0 dB SNR, where repetition-3 frames only partly recover. This
+is the over-the-air check the code still needs.
+
+Then, if time allows:
 
 - swap roles (B transmits, A receives). The measured ppm should flip sign;
 - a phone as the transmitter (a third, unrelated clock);
@@ -98,6 +106,8 @@ Record for the final report:
 | A→B | 1.0 | | | | | | |
 | A→B | 2.0 | | | | | | |
 | A→B | 3.0 | | | | | | |
+| A→B conv | 1.0 | | | | | | |
+| A→B conv | 3.0 | | | | | | |
 | B→A | 1.0 | | | | | | |
 | phone→B | 1.0 | | | | | | |
 
@@ -110,8 +120,8 @@ Record for the final report:
 - **Sign flip on role swap.** This is strong evidence the ppm is real.
 - **Failure mode vs distance.** `FAIL(sync)` means the chirp was not heard
   (level or distance). `FAIL(header)` or partial PRR means synchronised but
-  noisy. That is where the convolutional code (`run_acoustic.py --fec conv`)
-  would help. It is not yet in the live frame format.
+  noisy. Compare the same distance with `--repeat conv`, which should push
+  the failure point further out.
 
 ## 5. Troubleshooting
 

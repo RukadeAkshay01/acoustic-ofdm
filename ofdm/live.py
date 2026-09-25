@@ -17,9 +17,9 @@ from .sync import find_frame, estimate_clock_ppm
 from .equalizer import ChannelEstimator
 
 
-def build_frame(text: bytes, name: str = "message.txt", repeat: int = 3,
+def build_frame(text: bytes, name: str = "message.txt", repeat=3,
                 cfg: OFDMConfig = DEFAULT):
-    """Bytes -> (waveform, bits, frame meta, modem meta)."""
+    """Bytes -> (waveform, bits, frame meta, modem meta).  repeat: int or "conv"."""
     bits, fmeta = framing.encode_live(text, name, repeat)
     x, mmeta = modem.modulate(bits, cfg)
     return x, bits, fmeta, mmeta
